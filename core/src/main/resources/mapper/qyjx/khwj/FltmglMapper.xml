@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.FltmglMapper">
+    <select id="queryByMbfl" resultType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO">
+      select ftg.id,ftg.mbflid,ftg.tmid,ftg.tmsx,ftg.tmdaly,ftg.tmdagsmc,ftg.tmdagsbm,ftg.tkzsfwdf,ftg.tmsffs,ftg.tmsffffl,ftg.tmsfbdsms,tm.tmbm,tm.tmmc,tm.tmlx
+        from qyjx_khwj_fltmgl ftg,qyjx_khwj_tm tm WHERE ftg.tmid=tm.id and ftg.mbflid  =#{mbflid}
+        <if test='tmlx != null and tmlx =="3" '>
+            AND tm.tmlx = '3'
+        </if>
+        order by tmsx asc
+    </select>
+    <select id="queryAllTm" resultType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO">
+      select IFNULL(ftg.id,0) id,#{mbflid} mbflid,tm.id tmid,ftg.tmsx,ftg.tmdaly,ftg.tmdagsmc,ftg.tmdagsbm,ftg.tkzsfwdf,ftg.tmsffs,ftg.tmsffffl,ftg.tmsfbdsms,tm.tmbm,tm.tmmc,tm.tmlx
+        from qyjx_khwj_tm tm  LEFT JOIN
+        (SELECT f.* from  qyjx_khwj_fltmgl f, qyjx_khwj_mbfl fl where f.mbflid = fl.id AND fl.mbid =#{mbid} ) ftg
+        on tm.id = ftg.tmid
+				where tm.zt = 1 and tm.mbslid is null
+        <if test="tmmc != null and tmmc!='' ">
+            AND (tm.tmmc LIKE concat('%',#{tmmc},'%') or tm.tmbm LIKE concat('%',#{tmmc},'%') )
+        </if>
+        order by ftg.id asc,ftg.tmsx asc
+    </select>
+    <!--当前模板其他分类有该题目-->
+    <select id="queryMbflByMbAndTmNotfl" resultType="com.winning.batjx.core.khgl.khwj.domain.WjmbflDO">
+      select fl.id,fl.mbid,fl.mbflmc,fl.mbflsx,fl.sfyfj
+        from qyjx_khwj_mbfl  fl  WHERE EXISTS (
+        SELECT  1 from qyjx_khwj_fltmgl gl where fl.id=gl.mbflid and gl.tmid=#{tmid}
+        )
+        and fl.mbid = #{mbid} and fl.id !=#{mbflid}
+    </select>
+    <select id="queryByMb" resultType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO">
+     select ftg.id,ftg.mbflid,ftg.tmid,ftg.tmsx,ftg.tmdaly,ftg.tmdagsmc,ftg.tmdagsbm,ftg.tkzsfwdf,ftg.tmsffs,ftg.tmsffffl,ftg.tmsfbdsms,tm.tmbm,tm.tmmc,tm.tmlx,fl.mbflmc
+        from qyjx_khwj_mbfl fl,qyjx_khwj_fltmgl ftg,qyjx_khwj_tm tm WHERE fl.id=ftg.mbflid and ftg.tmid=tm.id and fl.mbid = #{mbid}
+        <if test='tmmc !=null and tmmc !=""'>
+            AND (tm.tmmc LIKE concat('%',#{tmmc},'%') or tm.tmbm LIKE concat('%',#{tmmc},'%') )
+        </if>
+        order by fl.mbflsx asc,ftg.tmsx asc
+    </select>
+    <insert id="saveOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_fltmgl(id,mbflid,tmid,tmsx,tmdaly,tmdagsmc,tmdagsbm,tkzsfwdf,tmsffs,tmsffffl,tmsfbdsms) values
+        (null,#{bean.mbflid},#{bean.tmid},#{bean.tmsx},#{bean.tmdaly},#{bean.tmdagsmc},#{bean.tmdagsbm},#{bean.tkzsfwdf},#{bean.tmsffs},#{bean.tmsffffl},#{bean.tmsfbdsms})
+    </insert>
+    <insert id="copyOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO" useGeneratedKeys="true" keyProperty="id">
+       insert into qyjx_khwj_fltmgl(id,mbflid,tmid,tmsx,tmdaly,tmdagsmc,tmdagsbm,tkzsfwdf,tmsffs,tmsffffl,tmsfbdsms)
+        select null,#{bean.mbflid},#{bean.tmid},#{bean.tmsx},#{bean.tmdaly},#{bean.tmdagsmc},#{bean.tmdagsbm},#{bean.tkzsfwdf},#{bean.tmsffs},#{bean.tmsffffl},#{bean.tmsfbdsms}
+        from qyjx_khwj_fltmgl where id = #{bean.id}
+    </insert>
+    <select id="queryMaxSxByMbflid" resultType="java.lang.Integer">
+       SELECT IFNULL( max(ftg.tmsx),0) mbflsx from qyjx_khwj_fltmgl ftg where ftg.mbflid = #{mbflid}
+    </select>
+    <insert id="saveList">
+        insert into qyjx_khwj_fltmgl(mbflid,tmid,tmsx,tmdaly,tmdagsmc,tmdagsbm,tkzsfwdf,tmsffs,tmsffffl,tmsfbdsms) values
+        <foreach collection="list" item="bean" separator=",">
+            (#{bean.mbflid},#{bean.tmid},#{bean.tmsx},#{bean.tmdaly},#{bean.tmdagsmc},#{bean.tmdagsbm},#{bean.tkzsfwdf},#{bean.tmsffs},#{bean.tmsffffl},#{bean.tmsfbdsms})
+        </foreach>
+    </insert>
+    <update id="updateOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO">
+        update qyjx_khwj_fltmgl gl set mbflid= #{bean.mbflid},tmid= #{bean.tmid},tmsx= #{bean.tmsx},tmdaly= #{bean.tmdaly},tmdagsmc= #{bean.tmdagsmc},tmdagsbm= #{bean.tmdagsbm},tkzsfwdf= #{bean.tkzsfwdf},tmsffs= #{bean.tmsffs},tmsffffl= #{bean.tmsffffl},tmsfbdsms= #{bean.tmsfbdsms}
+        where id = #{bean.id}
+    </update>
+    <update id="updateList">
+        <foreach collection="list" item="bean" separator=";">
+            update qyjx_khwj_fltmgl set mbflid= #{bean.mbflid},tmid= #{bean.tmid},tmsx= #{bean.tmsx},tmdaly= #{bean.tmdaly},tmdagsmc= #{bean.tmdagsmc},tmdagsbm= #{bean.tmdagsbm},tkzsfwdf= #{bean.tkzsfwdf},tmsffs= #{bean.tmsffs},tmsffffl= #{bean.tmsffffl},tmsfbdsms= #{bean.tmsfbdsms}
+            where id = #{bean.id}
+        </foreach>
+    </update>
+    <update id="deleteOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.FltmglDO">
+        DELETE gl from qyjx_khwj_fltmgl gl where gl.id=#{bean.id}
+    </update>
+    <update id="deleteList">
+        <foreach collection="list" item="bean" separator=";">
+            delete gl from qyjx_khwj_fltmgl gl where gl.id=#{bean.id}
+        </foreach>
+    </update>
+    <update id="deleteListNot">
+        delete gl from qyjx_khwj_fltmgl gl where gl.mbflid = #{mbflid}
+        <if test='list !=null and list.size() != 0'>
+            and gl.id not in
+            <foreach collection="list" item="bean" index="no" open="(" separator="," close=")">
+                #{bean.id}
+            </foreach>
+        </if>
+    </update>
+</mapper>

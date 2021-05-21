@@ -1,0 +1,198 @@
+winning:
+  host: 172.16.0.108 #应用ip
+  server:
+    port: 8089  #应用端口号
+    servlet:
+      context-path: /batjx #应用访问路径
+  application:
+    name: batjx-application  #应用服务名称
+  log:
+    enabled: false   #是否打开日志记录
+  consul:
+    enabled: fasle    #是否使用注册中心
+    host: ${winning.host}  #如果使用 注册中心的地址
+    port: 10080      #注册中心的端口号
+  zipkin:
+    enabled: false    #是否使用链路跟踪
+    #baseUrl: http://link-server/ #如果是走注册中心 则配置服务名 如：http://link-server/ 如果不走注册中心，则注明IP地址和端口号：http://localhost:8772
+    baseUrl: http://localhost:8772
+  tx:
+    address: ${winning.host}:8086 #事务管理者通讯地址
+  spring:
+    boot:
+      admin:
+        client:
+          url: http://${winning.host}:8084/spring-boot-admin-server/  #spring-boot-admin服务路径
+          instance:
+            service-base-url: http://${winning.host}:${winning.server.port}/ #当前实例基础链接
+          enabled: true   #是否启用springbootadmin的监控
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    consul:
+      host: ${winning.consul.host:localhost}
+      port: ${winning.consul.port:10080}
+      enabled: false # ${winning.consul.enabled:true} #是否启用consul
+      discovery:
+        enable: true
+        register: true
+        healthCheckInterval: 10s
+        service-name: ${spring.application.name}
+        instance-id: ${spring.application.name}-${spring.cloud.client.ip-address}-${server.port} #注意再注册consul服务时，请关闭本机的虚拟机地址
+        prefer-ip-address: true
+        healthCheckPath: ${server.servlet.context-path}/actuator/health
+  profiles:
+    active: dev
+    include: common
+  http:
+    encoding:
+      enabled: true
+#  datasource:
+#    qyjx:
+#      driverClass: com.mysql.jdbc.Driver
+#      url: jdbc:mysql://172.16.0.101:3306/qyjx_test?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+#      username: root
+#      password: sa
+#    wph:
+#      driverClass: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#      url: jdbc:sqlserver://172.16.0.121:1433;database=NETWPH
+#      username: sa
+#      password: wph@2020
+#    his:
+#      driverClass: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#      url: jdbc:sqlserver://172.16.0.121:1433;database=NETHIS
+#      username: sa
+#      password: wph@2020
+#    emr:
+#      driverClass: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#      url: jdbc:sqlserver://172.16.0.121:1433;database=NETEMR
+#      username: sa
+#      password: wph@2020
+  jackson:
+    locale: zh_CN
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: always
+  cache:
+    type: simple
+  boot:
+    admin:
+      client:
+        url: ${winning.spring.boot.admin.client.url}
+        #add by zhe 20190820 解决war包下监控的问题
+        #https://github.com/codecentric/spring-boot-admin/issues/772?tdsourcetag=s_pcqq_aiomsg
+        instance:
+          service-base-url: ${winning.spring.boot.admin.client.instance.service-base-url}
+        enabled: ${winning.spring.boot.admin.client.enabled}
+
+  application:
+    name: ${winning.application.name:batjx-application}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      maxRequestSize: 10MB
+  devtools:
+    restart:
+      additional-exclude: src/main/java
+      enabled: false
+      exclude: src/main/resources
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  type-aliases-package: com.**.domain
+  configuration:
+    call-setters-on-nulls: true
+
+logging:
+  level:
+    com:
+      winning:
+        batwph:
+          common:
+            mapper: debug #debug:输出 info:不输出
+          #api:
+              #common:
+            #mapper: debug
+          core:
+            mapper: debug
+    root: info
+  file: ../logs/batjx.log
+
+shiro:
+  loginUrl: /401
+
+security:
+  # 非移动端 token过期时间
+  expireTime: 86400000
+  # 3*24*3600*1000
+  overdueTime: 259200000
+  # 非移动端 token刷新时间
+  refreshTokenTime: 43200000
+  # 移动端 token过期时间
+  appExpireTime: 604800000
+  # 移动端 token刷新时间
+  appRefreshTokenTime: 345600000
+  anonymous-list:
+    - /
+    - /static/**
+    - /index*
+    - /*.js
+    - /favicon*
+    - /imgs/*
+    - /push/**
+    - /ecare_*
+    - /actuator/**
+    - /*/**
+    # - /role/**
+    # - /menu/**
+    # - /organization/**
+    # - /account/**
+    # - /file/**
+    # - /dict/**
+    # - /department/**
+    #add by zhe 2020-02-20 过滤掉获取短信验证码接口
+    - /app/vercode/**
+    - /app/register
+    - /optLog
+    - /data/*
+    - /env/*
+    - /sms/*
+    - /bll/*
+server:
+  port: ${winning.server.port:4008}
+  servlet:
+    context-path: ${winning.server.servlet.context-path:/batjx}
+  tomcat:
+    max-threads: 1000
+    max-connections: 20000
+pagehelper:
+  page-size-zero: true
+
+swagger:
+  enable: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: ALWAYS
+  health:
+    redis:
+      enabled: false
+#上传文件配置
+file:
+  tempFolder: tempFiles
+  uploadFolder: uploadFiles
+  upload_root_dir: d:\winxjjx\uploads
+
+qyjxUrl:
+  #  base: http://172.16.0.101:8185/qyjx
+  base: http://localhost:8011/qyjx
+  actionShtg: lczx/next
+  actionShbtg: lczx/back
+
+

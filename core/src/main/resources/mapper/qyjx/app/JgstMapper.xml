@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.winning.batjx.core.app.mapper.JgstMapper" >
+    
+    <!-- 查询机构下面的所有的医生考核信息 -->
+    <select id="selectAllByJgbm" resultType="java.util.Map" parameterType="java.util.Map">
+    	<if test="bizstJxqsSel == '1'.toString()">
+			SELECT t.khdxmc qj,ifnull(t.zbdf,0) qjval
+			FROM QYJX_KHHZ t
+			WHERE t.faid = #{faid} and t.khpl = #{khpl}
+			<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if>
+			and t.ssksbm = #{jgbm}
+		</if>
+		<if test="bizstJxqsSel == '2'.toString()">
+            SELECT t.khdxmc qj,ifnull(t.jj,0) qjval
+			FROM QYJX_KHHZ t
+			WHERE t.faid = #{faid} and t.khpl = #{khpl}
+			<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if>
+			and t.ssksbm = #{jgbm}
+         </if>
+         <if test="bizstJxqsSel == '3'.toString()">
+            SELECT t.khdxmc qj,ifnull(t.zbhgzl,0) qjval
+			FROM QYJX_KHHZ t
+			WHERE t.faid = #{faid} and t.khpl = #{khpl}
+			<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if>
+			and t.ssksbm = #{jgbm}
+         </if>
+    </select>
+    
+    <!-- 指标树 -->
+	<select id="selectZb" parameterType="java.util.Map" resultType="java.util.Map">
+		select distinct
+		a.khzbbm id,
+		a.khzbmc name,
+		a.ejflbm pid,
+		'1' yzjd
+		FROM QYJX_KHHZ t
+		inner join QYJX_KHHZ_XX a on t.id = a.fid
+		WHERE t.faid = #{faid} and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+			(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+		<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if>
+		<if test="zbmc !=null and zbmc !='' "> 
+			AND a.khzbmc like concat('%',#{zbmc,jdbcType=VARCHAR},'%')
+		</if> 
+		union
+		select distinct
+		a.ejflbm id,
+		a.ejflmc name,
+		a.yjflbm pid,
+		'0' yzjd
+		FROM QYJX_KHHZ t
+		inner join QYJX_KHHZ_XX a on t.id = a.fid
+		WHERE t.faid = #{faid} and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+			(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+		<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if> 
+		union
+		select distinct
+		a.yjflbm id,
+		a.yjflmc name,
+		'root' pid,
+		'0' yzjd
+		FROM QYJX_KHHZ t
+		inner join QYJX_KHHZ_XX a on t.id = a.fid
+		WHERE t.faid = #{faid} and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+			(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+		<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if> 
+		UNION
+		SELECT
+		'root' id,
+		'全部指标' name,
+		'' pid,
+		'0' yzjd
+	</select>
+	
+	<select id="selectKhhzxxByFaidAndKhqjForIndividualOrJg" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.QyjxKhhzXxVo">
+        select xx.* from(
+        	SELECT  distinct '1' type ,a.khlx,a.lxmc,a.fldj,a.yjflbm,a.yjflmc,a.ejflbm,a.ejflmc,a.sjflbm,a.sjflmc,a.khzbbm,a.khzbmc,
+        		a.cjfsbm,a.cjfsmc,a.zbz,a.mbdf,a.zbdf,a.bhgzl,a.zbjj,a.jgbm
+       		FROM QYJX_KHHZ t 
+			left join QYJX_KHHZ_XX a on t.id = a.fid
+        	WHERE t.faid = #{faid}
+        	<if test="khqj !=null and khqj !='' "> AND t.khzq = #{khqj}</if>
+        	and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+			(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+        	and (t.ssksbm is null or t.ssksbm = '')
+        	<!-- <if test="jgbm !=null and jgbm !='' "> and t.ssksbm = #{jgbm}</if> --> <!-- 暂不用 -->
+        )xx inner join(
+        	SELECT zbid,zbmc
+            FROM qyjx_bi_zstzbpz
+            WHERE faid=#{faid} and pzbz= #{pzbz}
+        )zdzb on xx.khzbbm = zdzb.zbid
+        
+        union
+        select xx.* from(
+        	SELECT  distinct '2' type ,a.khlx,a.lxmc,a.fldj,a.yjflbm,a.yjflmc,a.ejflbm,a.ejflmc,a.sjflbm,a.sjflmc,a.khzbbm,a.khzbmc,
+        		a.cjfsbm,a.cjfsmc,a.zbz,a.mbdf,a.zbdf,a.bhgzl,a.zbjj,a.jgbm
+       		FROM QYJX_KHHZ t 
+			left join QYJX_KHHZ_XX a on t.id = a.fid
+        	WHERE t.faid = #{faid}
+        	<if test="hbqj !=null and hbqj !='' "> AND t.khzq = #{hbqj}</if>
+        	and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+			(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+        	and (t.ssksbm is null or t.ssksbm = '')
+       	 <!-- <if test="jgbm !=null and jgbm !='' "> and t.ssksbm = #{jgbm}</if> -->
+        )xx inner join(
+        	SELECT zbid,zbmc
+            FROM qyjx_bi_zstzbpz
+            WHERE faid=#{faid} and pzbz= #{pzbz}
+        )zdzb on xx.khzbbm = zdzb.zbid
+    </select>
+    
+    <!-- 绩效趋势-->
+    <select id="queryJxqsGraphForIndividualOrJg" resultType="java.util.Map" parameterType="java.util.Map" >
+        <if test="khpl == '1'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                    SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                    UNION SELECT 5 AS qj UNION SELECT 6 AS qj UNION SELECT 7 AS qj
+                    UNION SELECT 8 AS qj UNION SELECT 9 AS qj UNION SELECT 10 AS qj
+                    UNION SELECT 11 AS qj UNION SELECT 12 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                UNION SELECT 5 AS qj UNION SELECT 6 AS qj UNION SELECT 7 AS qj
+                UNION SELECT 8 AS qj UNION SELECT 9 AS qj UNION SELECT 10 AS qj
+                UNION SELECT 11 AS qj UNION SELECT 12 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                UNION SELECT 5 AS qj UNION SELECT 6 AS qj UNION SELECT 7 AS qj
+                UNION SELECT 8 AS qj UNION SELECT 9 AS qj UNION SELECT 10 AS qj
+                UNION SELECT 11 AS qj UNION SELECT 12 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+               	 	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+
+        </if>
+        <if test="khpl == '2'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                ) AS TQJ inner JOIN(
+               SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+              	 	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+
+        </if>
+        <if test="khpl == '3'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj
+                ) AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ  WHERE FAID=#{faid} AND KHPL=#{khpl}
+                	<if test="khqj !=null and khqj !='' "> AND khzq = #{khqj}</if>
+                	and ( (khdxlx in ('0','1','2','3','8') and khdxbm = #{jgbm} ) or
+						(khdxlx in ('4','5','6') and khdxbm = #{ksbm}) )
+                	and (ssksbm is null or ssksbm = '')
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+
+        </if>
+        <if test="khpl == '4'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                SELECT #{fyear} AS qj UNION SELECT #{syear} AS qj UNION SELECT #{khnf} AS qj
+                )AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ WHERE JGBM=#{jgbm}
+                AND KHPL='4'
+                )AS D ON TQJ.qj=D.KHNF
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT #{fyear} AS qj UNION SELECT #{syear} AS qj UNION SELECT #{khnf} AS qj
+                )AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ WHERE JGBM=#{jgbm}
+                AND KHPL='4'
+                )AS D ON TQJ.qj=D.KHNF
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT #{fyear} AS qj UNION SELECT #{syear} AS qj UNION SELECT #{khnf} AS qj
+                )AS TQJ inner JOIN(
+                SELECT * FROM QYJX_KHHZ WHERE JGBM=#{jgbm}
+                AND KHPL='4'
+                )AS D ON TQJ.qj=D.KHNF
+                GROUP BY TQJ.qj
+            </if>
+        </if>
+    </select>
+    
+    <!-- 工作量与工作质量 -->
+    <select id="queryGzlOrGzzltop10ForIndividualOrJg" resultType="java.util.Map" parameterType="java.util.Map" >
+        <if test="top10Sel == '1'.toString()">
+            select * from(
+				select t.id,d.khzbbm,d.khzbmc,d.zbz,d.bhgzl,d.zbdf,z.zbsxbm,z.zbsxmc
+				from QYJX_KHHZ t
+				inner join qyjx_khhz_xx d on t.id = d.fid
+				left join qyjx_zb z on d.khzbbm = z.zbbm
+				where t.faid = #{faid} and t.khpl = #{khpl} and t.khzq = #{khqj} 
+				and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+					(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+				and (t.ssksbm is null or t.ssksbm = '')
+				<if test="top10Radio == '1'.toString()">
+                    ORDER BY d.zbz DESC
+                </if>
+                <if test="top10Radio == '2'.toString()">
+                    ORDER BY d.zbz ASC
+                </if>
+			)info
+			where info.zbsxbm = '1'
+			limit 0,10
+        </if>
+        <if test="top10Sel == '2'.toString()">
+            select * from(
+				select t.id,d.khzbbm,d.khzbmc,d.zbz,d.bhgzl,d.zbdf,z.zbsxbm,z.zbsxmc
+				from QYJX_KHHZ t
+				inner join qyjx_khhz_xx d on t.id = d.fid
+				left join qyjx_zb z on d.khzbbm = z.zbbm
+				where t.faid = #{faid} and t.khpl = #{khpl} and t.khzq = #{khqj} 
+				and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+					(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+				and (t.ssksbm is null or t.ssksbm = '')
+				<if test="top10Radio == '1'.toString()">
+                    ORDER BY d.zbdf DESC
+                </if>
+                <if test="top10Radio == '2'.toString()">
+                    ORDER BY d.zbdf ASC
+                </if>
+			)info
+			where info.zbsxbm = '2'
+			limit 0,10
+        </if>
+        <if test="top10Sel == '3'.toString()">
+            select * from(
+				select t.id,d.khzbbm,d.khzbmc,d.zbz,d.bhgzl,d.zbdf,z.zbsxbm,z.zbsxmc
+				from QYJX_KHHZ t
+				inner join qyjx_khhz_xx d on t.id = d.fid
+				left join qyjx_zb z on d.khzbbm = z.zbbm
+				where t.faid = #{faid} and t.khpl = #{khpl} and t.khzq = #{khqj} 
+				and ( (t.khdxlx in ('0','1','2','3','8') and t.khdxbm = #{jgbm} ) or
+					(t.khdxlx in ('4','5','6') and t.khdxbm = #{ksbm}) )
+				and (t.ssksbm is null or t.ssksbm = '')
+				<if test="top10Radio == '1'.toString()">
+                    ORDER BY d.bhgzl DESC
+                </if>
+                <if test="top10Radio == '2'.toString()">
+                    ORDER BY d.bhgzl ASC
+                </if>
+			)info
+			where info.zbsxbm = '1'
+			limit 0,10
+        </if>
+    </select>
+
+
+    <select id="queryJxfaList" parameterType="java.util.Map" resultType="java.util.Map">
+
+        SELECT DISTINCT a.faid,a.famc
+        FROM qyjx_khhz a
+        WHERE a.khnf =#{khnf} AND
+        a.khpl =#{khpl}
+        and a.khdxlx in ('4','5','6')
+        <choose>
+                               <when test='fzrbz =="1" '>
+                                   <if test="ksbm !=null and ksbm !='' ">AND a.khdxbm in ( ${ksbm} )
+                                   </if>
+                               </when>
+                               <when test='fzrbz =="2" '>
+                                   and a.khdxlx in ('0','1','2','3','8')
+                                   <if test="jgbm !=null and jgbm !='' ">AND a.khdxbm= #{jgbm}</if>
+                               </when>
+                               <otherwise>
+                                   and exists (  select 1
+                                                 from qyjx_khfa_jbxx tt
+                                                 where tt.id=a.faid and
+                                                       tt.czr = #{zclsh} )
+                               </otherwise>
+         </choose>
+
+
+    </select>
+
+    <!-- 查询已经归档(已经经过评价计算)的那个考核方案对应的区间 -->
+    <select id="getKhzqList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT a.khzq FROM qyjx_khhz a
+        WHERE a.khnf =#{khnf} AND a.khpl =#{khpl} AND a.faid = #{faid}
+        ORDER BY a.khzq ASC
+    </select>
+
+    <!-- 查询考核对象 -->
+    <select id="getKhdxList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        DISTINCT
+        sj.jgbm sjjgbm,
+        sj.jgmc sjjgmc,
+        sj.jglx sjjglx,
+        a.khdxlx,
+        COALESCE(a.khdxbm,0) khdxbm,COALESCE(a.khdxmc,0) khdxmc,COUNT(1)
+        FROM qyjx_khhz a
+        LEFT JOIN sys_zcjg j on a.khdxbm = j.jgbm
+        LEFT JOIN sys_zcjg sj on j.sjid = sj.id
+        WHERE a.ssksbm is null AND a.khnf =#{khnf} AND a.khpl =#{khpl} AND a.faid = #{faid} AND
+        (a.jgbm=#{jgbm} or a.khdxbm=#{jgbm}
+        OR a.khdxbm in (
+        SELECT j.jgbm from sys_zcjg j where j.sjid = (SELECT sj.id from sys_zcjg sj where sj.jglx=7 and sj.jgbm=#{jgbm}
+        )
+        )
+        OR a.jgbm in (
+        SELECT j.jgbm FROM sys_zcjg j WHERE j.jglx = 7 and j.sjid = ( SELECT sj.id FROM sys_zcjg sj WHERE sj.jgbm
+        =#{jgbm} )
+        )
+        )
+        <if test='ygtbs =="1"'>
+            AND (
+            a.khdxlx=8 OR sj.jglx =7
+            )
+            AND NOT EXISTS (<!-- 医共体考核中心被考核，理论上上级医院不应该被考 -->
+            SELECT 1 from qyjx_khhz b where b.faid=a.faid and b.khdxbm=sj.jgbm
+            )
+        </if>
+        <if test="khdx !=null and khdx !='' and khdx !='-1' ">AND a.khdxbm =#{khdx}</if>
+        GROUP BY a.khdxbm,a.khdxmc
+        ORDER BY a.khdxlx asc, sj.jgbm desc
+    </select>
+
+
+    <select id="getKhhzList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT a.* FROM qyjx_khhz a
+        WHERE a.zbdf is not null and  a.khnf =#{khnf} AND a.khpl =#{khpl} AND a.faid = #{faid} AND a.khzq = #{khzq}  AND a.khdxbm = #{khdxbm} AND a.jgbm=#{jgbm}
+        ORDER BY a.zbdf desc
+    </select>
+
+</mapper>

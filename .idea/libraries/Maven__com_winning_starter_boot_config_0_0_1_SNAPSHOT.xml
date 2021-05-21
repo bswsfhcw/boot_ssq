@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.winning.starter:boot-config:0.0.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/starter/boot-config/0.0.1-SNAPSHOT/boot-config-0.0.1-20200710.062010-39.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/starter/boot-config/0.0.1-SNAPSHOT/boot-config-0.0.1-20200710.062010-39-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/starter/boot-config/0.0.1-SNAPSHOT/boot-config-0.0.1-20200710.062010-39-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

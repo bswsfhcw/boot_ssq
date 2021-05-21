@@ -1,0 +1,767 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.winning.batjx.core.app.mapper.ZtstMapper" >
+
+   <!-- 根据年份查询方案（常规方案） -->
+  <select id="queryBizstByNd" resultType="com.winning.batjx.core.khgl.khwj.vo.QyjxKhhzVo" parameterType="java.util.Map" >
+      SELECT HZXX.faid,HZXX.famc,HZXX.khpl
+      FROM qyjx_khhz AS HZXX
+      WHERE HZXX.JGBM = #{jgbm} AND KHDXLX!='7'
+      AND EXISTS(SELECT 1 FROM qyjx_khfa_jbxx AS FAXX WHERE FAXX.JLZT = '1' AND FAXX.JGBM=#{jgbm} AND FAXX.ID=HZXX.faid  )
+      <if test="khnf !=null ">
+          AND HZXX.KHNF = #{khnf}
+      </if>
+      <if test="khpl !=null ">
+          AND HZXX.KHPL = #{khpl}
+      </if>
+      GROUP BY HZXX.faid,HZXX.famc,HZXX.khpl
+      ORDER BY HZXX.faid ASC
+   </select>
+
+    <!-- 根据年份查询方案（区县下医共体建立的医共体方案） -->
+    <select id="queryBizstYgtFaByNd" resultType="com.winning.batjx.core.khgl.khwj.vo.QyjxKhhzVo" parameterType="java.util.Map" >
+        SELECT HZXX.faid,HZXX.famc,HZXX.khpl
+        FROM qyjx_khhz AS HZXX
+        WHERE 1=1 AND KHDXLX!='7'
+        AND EXISTS (
+                        SELECT 1 FROM sys_zcjg AS JG
+                        WHERE JG.JGLX='7'
+                        AND EXISTS(
+                                    SELECT 1 FROM sys_zcjg AS JG1 WHERE JG.SJID=JG1.ID
+                                    AND EXISTS(SELECT 1 FROM sys_czry AS RY WHERE RY.RYGH=#{rygh} AND RY.JGBM=JG1.JGBM)
+                        ) AND JG.JGBM=HZXX.JGBM
+        )
+
+        AND EXISTS(
+                            SELECT 1 FROM qyjx_khfa_jbxx AS FAXX WHERE FAXX.JLZT = '1'
+                            AND EXISTS (
+                                            SELECT 1 FROM sys_zcjg AS JG
+                                            WHERE JG.JGLX='7'
+                                            AND EXISTS(
+                                                            SELECT 1 FROM sys_zcjg AS JG1 WHERE JG.SJID=JG1.ID
+                                                            AND EXISTS(SELECT 1 FROM sys_czry AS RY WHERE RY.RYGH=#{rygh} AND RY.JGBM=JG1.JGBM)
+                                            ) AND JG.JGBM=FAXX.JGBM
+                                          )
+                                              AND FAXX.ID=HZXX.faid AND FAXX.YGTBS='1'
+        )
+        <if test="khnf !=null ">
+            AND HZXX.KHNF = #{khnf}
+        </if>
+        <if test="khpl !=null ">
+            AND HZXX.KHPL = #{khpl}
+        </if>
+        GROUP BY HZXX.faid,HZXX.famc,HZXX.khpl
+        ORDER BY HZXX.faid ASC
+    </select>
+
+    <!-- 判断当前登录人 是 县级机构负责人 、 医共体领头单位负责人 、 机构负责人 -->
+    <select id="queryCurLoginUserJgdjByRygh" resultType="java.util.HashMap" parameterType="java.util.Map" >
+            SELECT 'JGLX' AS type,JG.JGLX AS val FROM sys_zcjg AS JG
+            WHERE EXISTS(SELECT 1 FROM sys_czry AS RY WHERE RY.RYGH=#{rygh} AND RY.JGBM=JG.JGBM)
+    </select>
+
+    <!--判断当前登录人所在的机构是否为【医共体】，有记录就是医共体 , 浦江二院 是医共体 但是下边没有挂社区中心 -->
+    <select id="queryCurLoginUserIsYgtByJgbm" resultType="java.util.HashMap" parameterType="java.util.Map" >
+    SELECT 'YGT_SJJGBM' AS type, JGBM AS jgbm FROM sys_zcjg AS A WHERE
+    EXISTS(
+            SELECT 1 FROM sys_zcjg AS B WHERE JGLX='7' AND JGBM=#{jgbm} AND A.ID=B.SJID
+    )
+
+    UNION ALL
+
+    SELECT 'YGT_XJJGBM' AS type,JGBM AS jgbm FROM sys_zcjg AS A WHERE
+        EXISTS(
+            SELECT 1 FROM sys_zcjg AS B WHERE JGLX='7' AND JGBM=#{jgbm} AND B.ID=A.SJID
+        )
+    </select>
+
+    <!--根据方案id 查询方案的考核期间有效的-->
+    <select id="queryBizstFaqjByFaid" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        SELECT khzq FROM qyjx_khfa_khzq WHERE FAID=#{faid} AND QYZT='1'
+        ORDER BY khzq ASC
+    </select>
+
+    <!--右侧指标树-->
+    <select id="zblbTree" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        <if test="queryArea!=null and queryArea == 'ALL'.toString()">
+            SELECT 0 AS id,'全部' AS name,-1 AS pId,'true' AS open,'' AS checked,'' AS zbsxmc
+            UNION
+            SELECT CONCAT('fl',ID) AS id,FLMC AS name,
+            CASE WHEN FID IS NULL THEN 0 ELSE CONCAT('fl',FID) END AS pId,'true' AS open,'' AS checked,'' AS zbsxmc
+            FROM qyjx_zbfl WHERE JLZT='1'
+            UNION
+            SELECT zbbm AS id,ZBMC AS name,CONCAT('fl',FLID) AS pId,'false' AS open,'' AS checked,ZBSXMC AS zbsxmc
+            FROM qyjx_zb AS ZBK
+            WHERE ZBK.jlzt='1'
+            AND EXISTS(
+                            SELECT 1 FROM qyjx_zbfl WHERE ZBK.FLID=ID
+            )
+            AND EXISTS(
+                            SELECT 1 FROM qyjx_khfa_khzb AS KHZB WHERE
+                            EXISTS(SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FL.faid=#{faid} AND FL.id=KHZB.flid)
+                            AND KHZB.zbbm=ZBK.zbbm
+            )
+        </if>
+
+        <if test="queryArea!=null and queryArea == 'SP'.toString()">
+            SELECT zbbm AS id,ZBMC AS name,CONCAT('fl',FLID) AS pId,'false' AS open,'' AS checked,ZBSXMC AS zbsxmc
+            FROM qyjx_zb AS ZBK
+            WHERE jlzt='1' AND EXISTS(
+                SELECT 1 FROM qyjx_zbfl WHERE ZBK.FLID=ID
+            )
+            AND EXISTS(
+                SELECT 1 FROM qyjx_khfa_khzb AS KHZB WHERE
+                EXISTS(SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FL.faid=#{faid} AND FL.id=KHZB.flid)
+                AND KHZB.zbbm=ZBK.zbbm
+            )
+            <if test="zbmc!=null and zbmc != ''">
+                AND ZBMC LIKE CONCAT('%',#{zbmc},'%')
+            </if>
+        </if>
+
+        <if test="queryArea!=null and queryArea == 'HEAD'.toString()">
+            SELECT 0 AS id,'全部' AS name,-1 AS pId,'true' AS open,'' AS checked
+            UNION
+            SELECT CONCAT('fl',ID) AS id,FLMC AS name,
+            CASE WHEN FID IS NULL THEN 0 ELSE CONCAT('fl',FID) END AS pId,'true' AS open,'' AS checked
+            FROM qyjx_zbfl WHERE JLZT='1'
+        </if>
+
+    </select>
+
+    <!-- 保存重点指标 以及  TOP5 配置的指标-->
+    <insert id="saveBizstZbpz" parameterType="java.util.Map">
+        INSERT INTO qyjx_bi_zstzbpz(zbid,zbmc,zbsxmc,pzbz,faid,czr,czsj)
+        SELECT zbbm AS zbid,zbmc,zbsxmc,#{pzbz},#{faid},#{czr} AS czr,NOW()
+        FROM qyjx_zb
+        WHERE jlzt='1' AND  zbbm IN
+        <foreach item="item" index="index" collection="queryZbxx" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </insert>
+
+    <!-- 根据方案ID 删除 该方案配置的指标项-->
+    <delete id="delBizstZbpz" parameterType="java.util.Map">
+        DELETE FROM qyjx_bi_zstzbpz WHERE faid=#{faid}
+        <if test="pzbz == 'ZDZB'.toString()">
+            AND pzbz='ZDZB'
+        </if>
+        <if test="pzbz == 'TOP5'.toString()">
+            AND pzbz='TOP5'
+        </if>
+    </delete>
+
+    <!-- 根据方案ID 查询指标配置信息-->
+    <select id="queryBizstZbpzByParams" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        SELECT zbid AS zbbm,zbmc,zbsxmc,pzbz FROM qyjx_bi_zstzbpz WHERE faid=#{faid} AND pzbz=#{pzbz}
+    </select>
+
+    <!-- 重点指标卡片的展示 -->
+    <select id="queryBizstZdzbKp" resultType="java.util.HashMap" parameterType="java.util.Map" >
+    SELECT '1' AS type, A.zbid AS zbdm,A.zbmc,IFNULL(B.zbzz,0) AS zbzz FROM (
+            SELECT zbid,zbmc
+            FROM qyjx_bi_zstzbpz AS PP
+            WHERE faid=#{faid} and pzbz='ZDZB'
+                <if test="jgbmYgt !=null and jgbmYgt != ''">
+                    AND EXISTS(
+                                SELECT 1 FROM (
+                                                SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                                AND  EXISTS(
+                                                                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = P.KHDXBM AND
+                                                                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                                                )
+                                                AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                                ) AS TT WHERE TT.ZBBM=PP.ZBID
+                    )
+                </if>
+                <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">
+                    AND EXISTS(
+                                SELECT 1 FROM (
+                                                SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                                AND P.KHDXBM=#{jgbmYgt_pjey}
+                                                AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                                ) AS TT WHERE TT.ZBBM=PP.ZBID
+                    )
+                </if>
+
+    ) AS A LEFT JOIN (
+            SELECT khzbmc,khzbbm,SUM(IFNULL(zbz,0)) AS zbzz
+            FROM qyjx_khhz_xx S WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khhz M WHERE M.JGBM=#{jgbm}  AND M.KHDXLX!='7' AND M.KHNF=#{khnf}
+                    AND M.KHPL=#{khpl} AND M.KHZQ=#{khqj} AND M.FAID=#{faid} AND M.ID=S.FID
+                    <if test="jgbmYgt !=null and jgbmYgt != ''">
+                        AND  EXISTS(
+                                        SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                        EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                        )
+                    </if>
+                    <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=#{jgbmYgt_pjey} </if>
+            )
+            GROUP BY khzbmc,khzbbm
+    ) AS B ON A.zbid=B.khzbbm
+
+    UNION
+
+    SELECT '2' AS type, A1.zbid AS zbdm,A1.zbmc,IFNULL(B1.zbzz,0) AS zbzz FROM (
+            SELECT zbid,zbmc
+            FROM qyjx_bi_zstzbpz AS PP
+            WHERE faid=#{faid} and pzbz='ZDZB'
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND EXISTS(
+                            SELECT 1 FROM (
+                                                SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                                AND  EXISTS(
+                                                                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = P.KHDXBM AND
+                                                                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                                                )
+                                                AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                            ) AS TT WHERE TT.ZBBM=PP.ZBID
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">
+                AND EXISTS(
+                                SELECT 1 FROM (
+                                                    SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                                    AND P.KHDXBM=#{jgbmYgt_pjey}
+                                                    AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                                ) AS TT WHERE TT.ZBBM=PP.ZBID
+                )
+            </if>
+    ) AS A1 LEFT JOIN (
+            SELECT khzbmc,khzbbm,SUM(IFNULL(zbz,0)) AS zbzz
+            FROM qyjx_khhz_xx S1 WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khhz M1 WHERE M1.JGBM=#{jgbm} AND M1.KHDXLX!='7' AND M1.KHNF=#{hbnf}
+                    AND M1.KHPL=#{khpl} AND M1.KHZQ=#{hbqj}  AND M1.ID=S1.FID
+                    <if test="jgbmYgt !=null and jgbmYgt != ''">
+                        AND  EXISTS(
+                        SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M1.KHDXBM AND
+                        EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                        )
+                    </if>
+                    <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M1.KHDXBM=#{jgbmYgt_pjey} </if>
+            )
+            GROUP BY khzbmc,khzbbm
+    ) AS B1 ON A1.zbid=B1.khzbbm
+
+
+
+    UNION
+    SELECT '3' AS type, A2.zbid AS zbdm,A2.zbmc,IFNULL(B2.zbzz,0) AS zbzz FROM (
+            SELECT zbid,zbmc
+            FROM qyjx_bi_zstzbpz AS PP
+            WHERE faid=#{faid} and pzbz='ZDZB'
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND EXISTS(
+                            SELECT 1 FROM (
+                                            SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                            AND  EXISTS(
+                                                            SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = P.KHDXBM AND
+                                                            EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                                            )
+                                            AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                            ) AS TT WHERE TT.ZBBM=PP.ZBID
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">
+                AND EXISTS(
+                            SELECT 1 FROM (
+                                            SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                            AND P.KHDXBM=#{jgbmYgt_pjey}
+                                            AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                            ) AS TT WHERE TT.ZBBM=PP.ZBID
+                )
+            </if>
+    ) AS A2 LEFT JOIN (
+            SELECT khzbmc,khzbbm,SUM(IFNULL(zbz,0)) AS zbzz
+            FROM qyjx_khhz_xx S2 WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khhz M2 WHERE M2.JGBM=#{jgbm} AND M2.KHDXLX!='7' AND M2.KHNF=#{tbnf}
+                    AND M2.KHPL=#{khpl} AND M2.KHZQ=#{tbqj}  AND M2.ID=S2.FID
+                    <if test="jgbmYgt !=null and jgbmYgt != ''">
+                        AND  EXISTS(
+                                    SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M2.KHDXBM AND
+                                    EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                        )
+                    </if>
+                    <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M2.KHDXBM=#{jgbmYgt_pjey} </if>
+            )
+            GROUP BY khzbmc,khzbbm
+    ) AS B2 ON A2.zbid=B2.khzbbm
+    </select>
+
+
+    <!-- 重点指标TOP5 部分-->
+    <select id="queryBizstZdzbTop5Nr" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        SELECT zbid,zbmc,zbsxmc FROM qyjx_bi_zstzbpz AS PP WHERE faid=#{faid} and pzbz='TOP5'
+        <if test="jgbmYgt !=null and jgbmYgt != ''">
+            AND EXISTS(
+                        SELECT 1 FROM (
+                                            SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                            AND  EXISTS(
+                                                            SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = P.KHDXBM AND
+                                                            EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                                            )
+                                            AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                        ) AS TT WHERE TT.ZBBM=PP.ZBID
+            )
+        </if>
+        <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">
+            AND EXISTS(
+                        SELECT 1 FROM (
+                                        SELECT DISTINCT ZBBM FROM qyjx_khfa_khzb_cf AS P WHERE FAID=#{faid}
+                                        AND P.KHDXBM=#{jgbmYgt_pjey}
+                                        AND P.KHNF=#{khnf} AND P.KHPL=#{khpl} AND P.KHQJ=#{khqj}
+                        ) AS TT WHERE TT.ZBBM=PP.ZBID
+            )
+        </if>
+    </select>
+
+    <select id="queryBizstZdzbTop5" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        <if test="zbsxLb == 'SL'.toString()">
+            SELECT B.khdxbm,JG.JGJC AS khdxmc,A.zbzz,'SL' AS sx FROM(
+                SELECT S.FID,SUM(IFNULL(zbz,0)) AS zbzz
+                FROM qyjx_khhz_xx S WHERE EXISTS(
+                            SELECT 1 FROM qyjx_khhz M WHERE M.JGBM=#{jgbm} AND M.KHDXLX!='7' AND M.KHNF=#{khnf}
+                            AND M.KHPL=#{khpl} AND M.KHZQ=#{khqj} AND M.FAID=#{faid} AND M.ID=S.FID
+                                <if test="jgbmYgt !=null and jgbmYgt != ''">
+                                    AND  EXISTS(
+                                                    SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                                    EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                                    )
+                                </if>
+                                <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=#{jgbmYgt_pjey} </if>
+
+                )AND khzbbm=#{zbbm}
+                GROUP BY S.FID
+            )A LEFT JOIN qyjx_khhz B ON A.FID=B.ID AND B.KHDXLX!='7'
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                            SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = B.KHDXBM AND
+                            EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND B.KHDXBM=#{jgbmYgt_pjey} </if>
+            INNER JOIN sys_zcjg AS JG ON B.khdxbm=JG.JGBM
+            WHERE
+            EXISTS(
+                    SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                    )AND KHDX.khdxbm=B.khdxbm
+            )
+            ORDER BY A.zbzz DESC
+            LIMIT 5
+        </if>
+
+        <if test="zbsxLb == 'ZL'.toString()">
+            SELECT B.khdxbm,JG.JGJC AS khdxmc,A.zbzdf AS zbzz,'ZL' AS sx FROM(
+                SELECT S.FID,SUM(IFNULL(zbdf,0)) AS zbzdf
+                FROM qyjx_khhz_xx S WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khhz M WHERE M.JGBM=#{jgbm} AND M.KHDXLX!='7' AND M.KHNF=#{khnf}
+                    AND M.KHPL=#{khpl} AND M.KHZQ=#{khqj} AND M.FAID=#{faid} AND M.ID=S.FID
+                    <if test="jgbmYgt !=null and jgbmYgt != ''">
+                        AND  EXISTS(
+                                    SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                    EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                        )
+                    </if>
+                    <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=#{jgbmYgt_pjey} </if>
+                )AND khzbbm=#{zbbm}
+                GROUP BY S.FID
+            )A LEFT JOIN qyjx_khhz B ON A.FID=B.ID AND B.KHDXLX!='7'
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = B.KHDXBM AND
+                                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND B.KHDXBM=#{jgbmYgt_pjey} </if>
+            INNER JOIN sys_zcjg AS JG ON B.khdxbm=JG.JGBM
+            WHERE
+            EXISTS(
+                    SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                      SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                    )AND KHDX.khdxbm=B.khdxbm
+            )
+            ORDER BY A.zbzdf DESC
+            LIMIT 5
+        </if>
+
+    </select>
+
+    <!-- 根据方案的ID 获取 方案下的分类类型 -->
+    <select id="queryCurFafllx" resultType="java.util.HashMap" parameterType="java.util.Map" >
+            SELECT fllx FROM qyjx_khfa_flxx WHERE FAID=#{faid}
+            GROUP BY fllx
+            ORDER BY fllx ASC
+    </select>
+
+    <!-- 机构分析子视图 -->
+    <select id="queryBizstKhjgfxGraph" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        <if test="jgfxSel == '1'.toString()">
+            SELECT 'jgs' AS type,NULL AS yjflbm,NULL AS yjflmc,NULL AS yjzbdf,COUNT(*) AS jgs FROM(
+                    SELECT khdxbm,khdxmc FROM qyjx_khhz AS M
+                    WHERE FAID=#{faid} AND KHDXLX!='7'
+                    AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+                    AND EXISTS(
+                    SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                    )AND KHDX.khdxbm=M.khdxbm
+                    )
+                    <if test="jgbmYgt !=null and jgbmYgt != ''">
+                        AND  EXISTS(
+                                    SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                    EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                        )
+                    </if>
+                    <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+                    GROUP BY khdxbm,khdxmc
+            ) AS jg
+
+            UNION
+
+            SELECT 'jgdf' AS type,yjflbm,yjflmc,SUM(IFNULL(zbdf,0)) AS yjzbdf,NULL AS jgs
+            FROM qyjx_khhz_xx WHERE FID IN (
+                    SELECT ID FROM qyjx_khhz AS M
+                    WHERE FAID=#{faid} AND KHDXLX!='7'
+                    AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+                    AND EXISTS(
+                        SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                        SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                        )AND KHDX.khdxbm=M.khdxbm
+                    )
+                        <if test="jgbmYgt !=null and jgbmYgt != ''">
+                            AND  EXISTS(
+                                            SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                            EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                            )
+                        </if>
+                        <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            ) GROUP BY yjflbm,yjflmc
+        </if>
+
+        <if test="jgfxSel == '2'.toString()">
+            SELECT khdxbm,JG.JGJC AS khdxmc,SUM(IFNULL(zbhgzl,0)) AS jgzbhgzl
+            FROM qyjx_khhz AS M
+            INNER JOIN sys_zcjg AS JG ON JG.JGBM=M.khdxbm
+            WHERE FAID=#{faid} AND KHDXLX!='7'
+            AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+            AND EXISTS(
+                SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                )AND KHDX.khdxbm=M.khdxbm
+            )
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            GROUP BY khdxbm,khdxmc
+        </if>
+
+    </select>
+
+    <!-- TOP10 柱状图部分-->
+    <select id="queryBizstPmtop10" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        <if test="top10Sel == '1'.toString()">
+            SELECT  * FROM (
+            SELECT khdxbm,JG.JGJC AS khdxmc,SUM(IFNULL(zbdf,0)) AS jgzzbdf
+            FROM qyjx_khhz AS M
+            INNER JOIN sys_zcjg AS JG ON M.khdxbm=JG.JGBM
+            WHERE FAID=#{faid} AND KHDXLX!='7'
+            AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+            AND EXISTS(
+                        SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                                SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                        )AND KHDX.khdxbm=M.khdxbm
+            )
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            GROUP BY khdxbm,khdxmc
+                <if test="top10Radio == '2'.toString()">
+                    ORDER BY jgzzbdf DESC
+                </if>
+                <if test="top10Radio == '1'.toString()">
+                    ORDER BY jgzzbdf ASC
+                </if>
+            ) AS T1 limit 0,10
+        </if>
+
+        <if test="top10Sel == '2'.toString()">
+            SELECT  * FROM (
+            SELECT khdxbm,JG.JGJC AS khdxmc,SUM(IFNULL(jj,0)) AS jgzjj
+            FROM qyjx_khhz M
+            INNER JOIN sys_zcjg AS JG ON M.khdxbm=JG.JGBM
+            WHERE FAID=#{faid} AND KHDXLX!='7'
+            AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+            AND EXISTS(
+                    SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                            SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                    )AND KHDX.khdxbm=M.khdxbm
+            )
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                            SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                            EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            GROUP BY khdxbm,khdxmc
+            <if test="top10Radio == '2'.toString()">
+                ORDER BY jgzjj DESC
+            </if>
+            <if test="top10Radio == '1'.toString()">
+                ORDER BY jgzjj ASC
+            </if>
+            ) AS T1 limit 0,10
+        </if>
+
+        <if test="top10Sel == '3'.toString()">
+            SELECT  * FROM (
+            SELECT khdxbm,JG.JGJC AS khdxmc,convert(SUM(IFNULL(jj,0))/SUM(IFNULL(jgrs,0)),decimal(10,2)) AS avgjj
+            FROM qyjx_khhz AS M
+            INNER JOIN sys_zcjg AS JG ON M.khdxbm=JG.JGBM
+            WHERE FAID=#{faid} AND KHDXLX!='7'
+            AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+            AND EXISTS(
+                        SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                              SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                        )AND KHDX.khdxbm=M.khdxbm
+            )
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            GROUP BY khdxbm,khdxmc
+            <if test="top10Radio == '2'.toString()">
+                ORDER BY avgjj DESC
+            </if>
+            <if test="top10Radio == '1'.toString()">
+                ORDER BY avgjj ASC
+            </if>
+            ) AS T1 limit 0,10
+        </if>
+
+    </select>
+
+    <!--绩效分析-->
+    <select id="queryBizstJxfxGraph" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        <if test="bizstJxfxSel == '1'.toString()">
+            SELECT T1.khdxbm,T1.khdxmc,T1.jgzbdf,convert(T1.jgzbdf/T1.jgmbdf,decimal(10,4))*100 AS dfl FROM(
+            SELECT khdxbm,JG.JGJC AS khdxmc,
+            convert(SUM(IFNULL(zbdf,0)),decimal(10,2)) AS jgzbdf,
+            convert(SUM(IFNULL(mbdf,0)),decimal(10,2)) AS jgmbdf
+            FROM qyjx_khhz AS M
+            INNER JOIN sys_zcjg AS JG ON M.khdxbm=JG.JGBM
+            WHERE FAID=#{faid} AND KHDXLX!='7'
+            AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+            AND EXISTS(
+                        SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                            SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                        )AND KHDX.khdxbm=M.khdxbm
+            )
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            GROUP BY khdxbm,khdxmc
+            ) AS T1
+        </if>
+        <if test="bizstJxfxSel == '2'.toString()">
+            SELECT khdxbm,JG.JGJC AS khdxmc,
+            convert(SUM(IFNULL(zbhgzl,0)),decimal(10,2)) AS jgzbhgzl,
+            convert(SUM(IFNULL(jj,0)),decimal(10,2)) AS jgjj
+            FROM qyjx_khhz AS M
+            INNER JOIN sys_zcjg AS JG ON M.khdxbm=JG.JGBM
+            WHERE FAID=#{faid} AND KHDXLX!='7'
+            AND KHNF=#{khnf} AND KHPL=#{khpl} AND KHZQ=#{khqj}
+            AND EXISTS(
+                    SELECT 1 FROM qyjx_khfa_khdx AS KHDX WHERE EXISTS(
+                    SELECT 1 FROM qyjx_khfa_flxx AS FL WHERE FAID=#{faid} AND JLZT='1' AND FL.ID=KHDX.FLID
+                    )AND KHDX.khdxbm=M.khdxbm
+            )
+            <if test="jgbmYgt !=null and jgbmYgt != ''">
+                AND  EXISTS(
+                SELECT 1 FROM sys_zcjg AS C WHERE C.JGBM = M.KHDXBM AND
+                EXISTS(SELECT 1 FROM sys_zcjg AS D WHERE D.JGBM=#{jgbmYgt} AND C.SJID=D.ID)
+                )
+            </if>
+            <if test="jgbmYgt_pjey !=null and jgbmYgt_pjey != ''">AND M.KHDXBM=M.JGBM </if>
+            GROUP BY khdxbm,khdxmc
+        </if>
+
+    </select>
+
+    <!-- 绩效趋势-->
+    <select id="queryBizstJxqsGraph" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        <if test="khpl == '1'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                    SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                    UNION SELECT 5 AS qj UNION SELECT 6 AS qj UNION SELECT 7 AS qj
+                    UNION SELECT 8 AS qj UNION SELECT 9 AS qj UNION SELECT 10 AS qj
+                    UNION SELECT 11 AS qj UNION SELECT 12 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                UNION SELECT 5 AS qj UNION SELECT 6 AS qj UNION SELECT 7 AS qj
+                UNION SELECT 8 AS qj UNION SELECT 9 AS qj UNION SELECT 10 AS qj
+                UNION SELECT 11 AS qj UNION SELECT 12 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                UNION SELECT 5 AS qj UNION SELECT 6 AS qj UNION SELECT 7 AS qj
+                UNION SELECT 8 AS qj UNION SELECT 9 AS qj UNION SELECT 10 AS qj
+                UNION SELECT 11 AS qj UNION SELECT 12 AS qj
+                ) AS TQJ LEFT JOIN(
+                                    SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                    AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                    AND KHDXLX IN('3','4','5','6')
+                                    AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+
+        </if>
+        <if test="khpl == '2'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj UNION SELECT 3 AS qj UNION SELECT 4 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+
+        </if>
+        <if test="khpl == '3'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT 1 AS qj UNION SELECT 2 AS qj
+                ) AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz  WHERE FAID=#{faid}
+                                        AND KHNF=#{khnf} AND KHPL=#{khpl}
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                ) AS D ON TQJ.qj=D.KHZQ
+                GROUP BY TQJ.qj
+            </if>
+
+        </if>
+        <if test="khpl == '4'.toString()">
+            <if test="bizstJxqsSel == '1'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbdf,0)),decimal(10,2)) AS qjval FROM(
+                SELECT #{fyear} AS qj UNION SELECT #{syear} AS qj UNION SELECT #{khnf} AS qj
+                )AS TQJ LEFT JOIN(
+                                        SELECT * FROM qyjx_khhz WHERE 1=1
+                                        AND KHPL='4'
+                                        AND KHDXLX IN('3','4','5','6')
+                                        AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                )AS D ON TQJ.qj=D.KHNF
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '2'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.jj,0)),decimal(10,2)) AS qjval FROM(
+                SELECT #{fyear} AS qj UNION SELECT #{syear} AS qj UNION SELECT #{khnf} AS qj
+                )AS TQJ LEFT JOIN(
+                                    SELECT * FROM qyjx_khhz WHERE 1=1
+                                    AND KHPL='4'
+                                    AND KHDXLX IN('3','4','5','6')
+                                    AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                )AS D ON TQJ.qj=D.KHNF
+                GROUP BY TQJ.qj
+            </if>
+            <if test="bizstJxqsSel == '3'.toString()">
+                SELECT TQJ.qj,convert(SUM(IFNULL(D.zbhgzl,0)),decimal(10,2)) AS qjval FROM(
+                SELECT #{fyear} AS qj UNION SELECT #{syear} AS qj UNION SELECT #{khnf} AS qj
+                )AS TQJ LEFT JOIN(
+                                    SELECT * FROM qyjx_khhz WHERE 1=1
+                                    AND KHPL='4'
+                                    AND KHDXLX IN('3','4','5','6')
+                                    AND EXISTS(SELECT 1 FROM sys_zcjg WHERE JLZT='1' AND KHDXBM=JGBM)
+                )AS D ON TQJ.qj=D.KHNF
+                GROUP BY TQJ.qj
+            </if>
+        </if>
+    </select>
+
+    <!-- 查询方案 信息-->
+    <select id="queryCurFaxx" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        SELECT jgbm AS fajgbm FROM qyjx_khfa_jbxx WHERE ID=#{faid}
+    </select>
+
+</mapper>

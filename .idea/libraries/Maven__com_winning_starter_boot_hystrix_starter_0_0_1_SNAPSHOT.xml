@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.winning.starter:boot-hystrix-starter:0.0.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/starter/boot-hystrix-starter/0.0.1-SNAPSHOT/boot-hystrix-starter-0.0.1-20200710.062012-29.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/starter/boot-hystrix-starter/0.0.1-SNAPSHOT/boot-hystrix-starter-0.0.1-20200710.062012-29-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/starter/boot-hystrix-starter/0.0.1-SNAPSHOT/boot-hystrix-starter-0.0.1-20200710.062012-29-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

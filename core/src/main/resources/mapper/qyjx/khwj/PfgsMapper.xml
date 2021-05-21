@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.PfgsMapper">
+    <select id="queryByFltmgl" resultType="com.winning.batjx.core.khgl.khwj.domain.PfgsDO">
+        select id,fltmglid,sfgsmc,sfgsbm,xh,fdksz,fdksjsf,fdjsz,fdjsjsf,dfz
+        from qyjx_khwj_pfgs  WHERE fltmglid=#{fltmglid}
+        order by  xh asc
+    </select>
+    <insert id="saveOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.PfgsDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_pfgs(id,fltmglid,sfgsmc,sfgsbm,xh,fdksz,fdksjsf,fdjsz,fdjsjsf,dfz) values
+        (null,#{bean.fltmglid},#{bean.sfgsmc},#{bean.sfgsbm},#{bean.xh},#{bean.fdksz},#{bean.fdksjsf},#{bean.fdjsz},#{bean.fdjsjsf},#{bean.dfz})
+    </insert>
+    <insert id="copyOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.PfgsDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_pfgs(id,fltmglid,sfgsmc,sfgsbm,xh,fdksz,fdksjsf,fdjsz,fdjsjsf,dfz)
+        select null,#{bean.fltmglid},#{bean.sfgsmc},#{bean.sfgsbm},#{bean.xh},#{bean.fdksz},#{bean.fdksjsf},#{bean.fdjsz},#{bean.fdjsjsf},#{bean.dfz}
+        from qyjx_khwj_pfgs where id = #{bean.id}
+    </insert>
+    <insert id="saveList">
+        insert into qyjx_khwj_pfgs(fltmglid,sfgsmc,sfgsbm,xh,fdksz,fdksjsf,fdjsz,fdjsjsf,dfz) values
+        <foreach collection="list" item="bean" separator=",">
+            (#{bean.fltmglid},#{bean.sfgsmc},#{bean.sfgsbm},#{bean.xh},#{bean.fdksz},#{bean.fdksjsf},#{bean.fdjsz},#{bean.fdjsjsf},#{bean.dfz})
+        </foreach>
+    </insert>
+    <update id="updateOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.PfgsDO">
+        update qyjx_khwj_pfgs gs set fltmglid= #{bean.fltmglid},sfgsmc= #{bean.sfgsmc},sfgsbm= #{bean.sfgsbm},xh= #{bean.xh},fdksz= #{bean.fdksz},fdksjsf= #{bean.fdksjsf},fdjsz= #{bean.fdjsz},fdjsjsf= #{bean.fdjsjsf},dfz= #{bean.dfz}
+        where id = bean.id
+    </update>
+    <update id="updateList">
+        <foreach collection="list" item="bean" separator=";">
+            update qyjx_khwj_pfgs set fltmglid= #{bean.fltmglid},sfgsmc= #{bean.sfgsmc},sfgsbm= #{bean.sfgsbm},xh= #{bean.xh},fdksz= #{bean.fdksz},fdksjsf= #{bean.fdksjsf},fdjsz= #{bean.fdjsz},fdjsjsf= #{bean.fdjsjsf},dfz= #{bean.dfz}
+            where id = bean.id
+        </foreach>
+    </update>
+    <update id="deleteOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.PfgsDO">
+        DELETE gs from qyjx_khwj_pfgs gs where gs.id=#{bean.id}
+    </update>
+    <update id="deleteByFltmgl">
+        DELETE gs from qyjx_khwj_pfgs gs where gs.fltmglid=#{fltmglid}
+    </update>
+</mapper>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.TkglMapper">
+
+
+    <!-- 题目管理主页面查询-->
+    <select id="queryPageListTmDO" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.domain.TmDO">
+
+                SELECT TT.tmbm,TT.tmmc,
+                CASE TT.tmlx WHEN '1' THEN '单选' WHEN '2' THEN '多选' WHEN '3' THEN '填空' ELSE '--' END AS tmlxmc,
+                CASE TT.sfdtbz WHEN '0' THEN '无' ELSE '有' END AS sfdtbzmc
+                FROM(
+                        SELECT cjsj,tmbm,tmmc,tmlx,sfdtbz
+                        FROM qyjx_khwj_tm
+                        WHERE 1=1
+                        <if test="tmmc != null and tmmc!='' ">
+                            AND tmmc LIKE concat('%',#{tmmc},'%')
+                        </if>
+                        <if test="tmlx != null and tmlx!='9'.toString()"  >
+                            AND tmlx=#{tmlx}
+                        </if>
+
+                ) AS TT
+        ORDER BY TT.tmbm DESC
+    </select>
+
+    <!--查询今天最新产生题目的数量-->
+    <select id="queryTodayTmsl" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT tmbm sl FROM qyjx_khwj_tm WHERE cjsj BETWEEN #{kssj} AND #{jssj}
+    ORDER BY tmbm desc
+    LIMIT 1
+    </select>
+
+    <!--  查询题目主表 -->
+    <select id="getTmDOByKey" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.domain.TmDO">
+        SELECT id,tmbm,tmmc,tmlx,tmfbt,sfdtbz FROM qyjx_khwj_tm where tmbm=#{tmbm}
+    </select>
+
+    <!--  查询题目选项从表 -->
+    <select id="getTmxxDOByKey" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.domain.TmxxDO">
+        SELECT tmid,xxnr,xxsx FROM qyjx_khwj_tmxx  a
+        where exists(SELECT 1 FROM qyjx_khwj_tm b where a.tmid=b.id and b.tmbm=#{tmbm})
+    </select>
+
+    <!-- 新增题目 -->
+    <insert id="insertTmDO" parameterType="com.winning.batjx.core.khgl.khwj.domain.TmDO" useGeneratedKeys="true" keyColumn="id" keyProperty="id" >
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() as id
+        </selectKey>
+        INSERT INTO qyjx_khwj_tm(tmbm,tmmc,tmlx,tmfbt,sfdtbz,cjr,cjsj,zt)
+        VALUES(#{tmbm},#{tmmc},#{tmlx},#{tmfbt},#{sfdtbz},#{cjr},NOW(),'1')
+    </insert>
+
+    <!-- 新增题目选项 -->
+    <insert id="insertTmxxDO" parameterType="com.winning.batjx.core.khgl.khwj.domain.TmxxDO" useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO qyjx_khwj_tmxx(tmid,xxnr,xxsx)
+        VALUES(#{tmid},#{xxnr},#{xxsx})
+    </insert>
+
+    <!--题目详情-->
+    <select id="queryTmDO_detail" parameterType="java.util.Map" resultType="java.util.Map">
+            SELECT '1' AS type,tmbm,tmmc,sfdtbz,tmlx,tmfbt,NULL AS xxsx,NULL AS xxnr
+            FROM qyjx_khwj_tm
+            WHERE id=#{tmid}
+            UNION ALL
+            SELECT '2' AS type,NULL AS tmbm,NULL AS tmmc,NULL AS sfdtbz,NULL AS tmlx,NULL AS tmfbt,xxsx,xxnr
+            FROM qyjx_khwj_tmxx
+            WHERE tmid=#{tmid}
+    </select>
+
+    <!-- 删除题目 -->
+    <delete id="delTmDO" parameterType="java.util.Map">
+        DELETE FROM qyjx_khwj_tm WHERE tmbm=#{tmbm}
+    </delete>
+
+    <!-- 删除题目选项 -->
+    <delete id="delTmxxDO" parameterType="java.util.Map">
+        delete  a from qyjx_khwj_tmxx a
+        inner join qyjx_khwj_tm b on a.tmid=b.id
+        where b.tmbm=#{tmbm}
+    </delete>
+
+    <!-- 题目主表的修改-->
+    <update id="updateTmDO" parameterType="com.winning.batjx.core.khgl.khwj.domain.TmDO">
+        update qyjx_khwj_tm
+        set tmmc=#{tmmc,jdbcType=VARCHAR},tmlx=#{tmlx,jdbcType=VARCHAR},tmfbt=#{tmfbt,jdbcType=VARCHAR},sfdtbz=#{sfdtbz,jdbcType=VARCHAR},cjsj=NOW()
+        where tmbm=#{tmbm}
+    </update>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</mapper>

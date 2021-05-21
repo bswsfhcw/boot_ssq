@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.ssq.mapper.SsqMapper">
+    <select id="queryList" resultType="com.winning.batjx.core.ssq.vo.SsqVo">
+        select id,kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh
+        from ssq WHERE 1=1
+        <if test='ksrq!=null and ksrq !=""'>
+            AND kjrq &gt;= #{ksrq}
+        </if>
+        <if test='jsrq!=null and jsrq !=""'>
+            AND kjrq &lt;= #{jsrq}
+        </if>
+        ORDER BY kjrq desc
+    </select>
+    <insert id="saveList">
+        insert into ssq(kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh) values
+        <foreach collection="list" item="bean" separator=",">
+            (#{bean.kjrq},#{bean.qh},#{bean.hh1},#{bean.hh2},#{bean.hh3},#{bean.hh4},#{bean.hh5},#{bean.hh6},#{bean.lh})
+        </foreach>
+    </insert>
+    <update id="deleteList">
+        <foreach collection="list" item="bean" separator=";">
+            delete ssq from  ssq  where qh = #{bean.qh}
+        </foreach>
+    </update>
+    <!--分析历史 一段时间内 红色：历史出现最多(少) 蓝号：历史出现最多(少)-->
+    <select id="lstj" resultType="java.util.Map">
+          SELECT DISTINCT hh.hh,count(1) cc,'H' hl from (
+          SELECT hh1 hh,kjrq from ssq
+          UNION all
+          SELECT hh2 hh,kjrq from ssq
+          UNION all
+          SELECT hh3 hh,kjrq from ssq
+          UNION all
+          SELECT hh4 hh,kjrq from ssq
+          UNION all
+          SELECT hh5 hh,kjrq from ssq
+          UNION all
+          SELECT hh6 hh,kjrq from ssq
+          ) hh  where 1=1
+          <if test='ksrq!=null and ksrq !=""'>
+              AND kjrq &gt;= #{ksrq}
+          </if>
+          <if test='jsrq!=null and jsrq !=""'>
+              AND kjrq &lt;= #{jsrq}
+          </if>
+          GROUP by hh.hh
+          union  ALL
+          SELECT DISTINCT lh hh,count(1) cc ,'L' hl from ssq
+            where 1=1
+            <if test='ksrq!=null and ksrq !=""'>
+                AND kjrq &gt;= #{ksrq}
+            </if>
+            <if test='jsrq!=null and jsrq !=""'>
+                AND kjrq &lt;= #{jsrq}
+            </if>
+            GROUP by lh
+    </select>
+</mapper>

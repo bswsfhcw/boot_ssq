@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.winning.batjx.core.app.mapper.QyjxMapper">
+    <select id="queryLoginUser"   parameterType="java.util.Map" resultType="com.winning.batjx.core.common.domain.LoginUser">
+       SELECT r.id,r.rysfz,r.ryxm,r.rygh,r.xb,r.sjhm,r.dzyx,r.xzdz,r.ryzc,
+       r.ryzw,r.whcd,r.dlmm,r.jgbm,r.jlzt,r.czr,r.czsj,r.tbbz,r.sffzr,
+       r.gwxs,r.sfzb,r.sflh,T1.ksbm
+        from SYS_CZRY r
+        LEFT JOIN sys_zcjg j on r.jgbm = j.jgbm
+        LEFT JOIN (
+                    SELECT  GROUP_CONCAT( jg.jgbm ) AS ksbm,ryid
+                    FROM    sys_ryjg ks
+                    inner join sys_zcjg jg on ks.jgid=jg.id
+                    GROUP BY ks.ryid
+                  ) T1 on T1.ryid=r.id
+        where r.rygh=#{rygh}
+         LIMIT 1
+    </select>
+    <!-- 验证登录 废弃-->
+    <select id="verifyLogin" parameterType="com.winning.batjx.core.common.domain.LoginInfo" resultType="com.winning.batjx.core.common.domain.LoginInfo">
+        SELECT
+          id zclsh,
+          rygh rybm,
+          JGBM jgbm,
+          RYGH rygh,
+          RYXM ryxm
+	    FROM SYS_CZRY
+	    WHERE RYGH = #{username}  AND DLMM = #{password}
+    </select>
+</mapper>

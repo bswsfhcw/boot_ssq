@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@172.16.0.121:1521:orcl
+    username: nethis
+    password: nethis

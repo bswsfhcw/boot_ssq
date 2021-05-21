@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.winning.batjx.core.app.mapper.XcpfMapper">
+    <select id="queryKhfa"   parameterType="java.util.Map" resultType="java.util.Map">
+      SELECT DISTINCT fa.id faid, fa.famc
+      from qyjx_khfa_jbxx fa INNER JOIN qyjx_khfa_khzb_cf cf  on fa.id=cf.faid
+        where cf.khnf=#{khnf} and cf.khpl=#{khpl}
+        and fa.jlzt =1 and fa.qyzt = 1
+        and cf.zbsx=2 <!--有质量指标的方案，逻辑粗糙-->
+        <if test="jgbm !=null and jgbm !=''">
+            and ( fa.jgbm=#{jgbm} or cf.khdxbm=#{jgbm})
+        </if>
+        and exists (
+          select 1 from qyjx_zb zb where cf.zbbm=zb.zbbm
+        )
+        ORDER BY fa.id
+    </select>
+    <select id="queryKhdx"  parameterType="java.util.Map" resultType="java.util.Map">
+      SELECT DISTINCT cf.khdxbm,cf.khdxmc
+        from qyjx_khfa_jbxx fa INNER JOIN qyjx_khfa_khzb_cf cf  on fa.id=cf.faid
+        where cf.khnf=#{khnf} and cf.khpl=#{khpl} and cf.khqj=#{khzq}
+        and fa.jlzt =1 and fa.qyzt = 1 and fa.id=#{faid}
+        and cf.zbsx=2 <!--考核质量指标的对象-->
+        <if test="jgbm !=null and jgbm !=''">
+            and ( fa.jgbm=#{jgbm} or cf.khdxbm=#{jgbm})
+        </if>
+        and exists (
+          select 1 from qyjx_zb zb where cf.zbbm=zb.zbbm
+        )
+        ORDER BY cf.khdxbm
+    </select>
+    <select id="queryKhzbZtList"  parameterType="java.util.Map" resultType="java.util.Map">
+     select SUM(CASE when tb.zbz is not null and tb.zbz >0  then 1 else 0 end  ) cYpg,
+            SUM(CASE when tb.zbz is null or tb.zbz =0  then 1 else 0 end  ) cWpg,
+            SUM(CASE when wj.fjsl is not null and wj.fjsl >0  then 1 else 0 end  ) cYcj,
+            SUM(CASE when wj.fjsl is null or wj.fjsl =0  then 1 else 0 end  ) cWcj
+        from
+        qyjx_khfa_khzb_cf  cf
+        INNER JOIN qyjx_sjtb tb on  cf.faid=tb.faid and cf.khnf=tb.khnf and cf.khpl=tb.khpl  and cf.khqj=tb.khzq and cf.khdxbm=tb.dxbm and cf.zbbm=tb.zbbm
+        INNER JOIN qyjx_zb zb on tb.zbbm = zb.zbbm
+        LEFT JOIN (SELECT DISTINCT wg.mkid ,count(1) fjsl from qyjx_wjgl wg where  wg.mkbm='qyjx_sjtb' and wg.jlzt=1  GROUP BY wg.mkid) wj on tb.id=wj.mkid
+      <!--where cf.faid=155 and cf.khnf='2019' and cf.khpl=1  and cf.khqj=1 and cf.khdxbm=340101-->
+        where cf.faid=#{faid} and cf.khnf=#{khnf}  and cf.khpl=#{khpl}   and cf.khqj=#{khzq}  and cf.khdxbm=#{khdxbm}
+        and zb.zbsxbm =2
+        <if test="ryid !=null and ryid !=''">
+            and EXISTS (
+              SELECT 1 from qyjx_ry_zb rz where rz.zbbm=zb.zbbm and rz.ryid=#{ryid} and rz.ywlx=1
+            )
+        </if>
+    </select>
+    <select id="queryKhzbList"  parameterType="java.util.Map" resultType="java.util.Map">
+      select  zb.zbsxbm,IFNULL(zb.zbsm,'') zbsm, tb.id tbid,tb.zbbm,tb.zbmc,IFNULL(tb.zbz,'') zbz,tb.zbzt,wj.fjsl,IFNULL(tb.bz,'') pfms,
+        case WHEN	pj.khzt=2 or pj.khzt=4 or pj.khzt=5 then 0 else 1 end khzt  <!-- 已审核 申辩结束 已归档 不能改-->
+       from
+        qyjx_khfa_khzb_cf  cf
+        INNER JOIN qyjx_sjtb tb on cf.faid=tb.faid and cf.khnf=tb.khnf and cf.khpl=tb.khpl  and cf.khqj=tb.khzq and cf.khdxbm=tb.dxbm and cf.zbbm=tb.zbbm
+        INNER JOIN qyjx_zb zb on tb.zbbm = zb.zbbm
+        LEFT JOIN (SELECT DISTINCT wg.mkid ,count(1) fjsl from qyjx_wjgl wg where  wg.mkbm='qyjx_sjtb' and wg.jlzt=1 and wg.wjlx=0 GROUP BY wg.mkid) wj on tb.id=wj.mkid
+        LEFT JOIN qyjx_pjjs pj on pj.khlx=2 and  cf.faid=pj.faid and cf.khnf=pj.khnf and cf.khpl=pj.khpl  and cf.khqj=pj.khqj
+        where cf.faid=#{faid} and cf.khnf=#{khnf}  and cf.khpl=#{khpl}   and cf.khqj=#{khzq}  and cf.khdxbm=#{khdxbm}
+        and zb.zbsxbm =2
+        <if test="ryid !=null and ryid !=''">
+            and EXISTS (
+            SELECT 1 from qyjx_ry_zb rz where rz.zbbm=zb.zbbm and rz.ryid=#{ryid}  and rz.ywlx=1
+            )
+        </if>
+        <if test="zbmc !=null and zbmc != ''">
+            and zb.zbmc like concat('%',#{zbmc},'%')
+        </if>
+        <if test="zbtype !=null and zbtype != '' and zbtype == '1'.toString()">
+            and wj.fjsl is not null and wj.fjsl >0
+        </if>
+        <if test="zbtype !=null and zbtype != '' and zbtype == '2'.toString()">
+            and (wj.fjsl is null or wj.fjsl =0)
+        </if>
+        <if test="zbtype !=null and zbtype != '' and zbtype == '3'.toString()">
+            and tb.zbz is not null and tb.zbz >0
+        </if>
+        <if test="zbtype !=null and zbtype != '' and zbtype == '4'.toString()">
+            and ( tb.zbz is null or tb.zbz =0 )
+        </if>
+    </select>
+    <select id="queryKhzbPics"  parameterType="java.util.Map" resultType="java.util.Map">
+      SELECT wj.id wjid,wj.tpzm  from qyjx_wjgl wj where wj.mkbm='qyjx_sjtb' and wj.mkid = #{tbid} and wj.jlzt = 1 and wj.wjlx=0 and wj.tpzm is not null
+      <!-- and wj.tpzm is not null -->
+    </select>
+    <update id="updateSjtb" parameterType="java.util.Map">
+        update qyjx_sjtb
+        set bz=#{bz}
+        <if test="zbz !=null and zbz != ''">
+            ,zbz=#{zbz}
+        </if>
+        where id=#{id}
+    </update>
+    <update id="updateWjgl" parameterType="java.lang.String">
+        delete from qyjx_wjgl  where mkid=#{q} and wjlx=0 and tpzm is not null
+        <!--update qyjx_wjgl wj
+        set wj.jlzt=0
+        where wj.mkid=#{tbid}
+        and wj.wjlx=0 and wj.tpzm is not null -->
+
+    </update>
+    <insert id="insertWjgl" parameterType="com.winning.batjx.core.khgl.khwj.domain.PicDO">
+		insert into qyjx_wjgl (mkid,mkbm,yswjmc,ccwjmc,wjlx,cclj,scsj,scr,jlzt,bz,jgbm,tpzm)
+		VALUES (
+		  #{mkid}, 'qyjx_sjtb', #{yswjmc}, #{ccwjmc}, 0, #{cclj}, now(), #{scr}, 1, 'mkid字段数据关联qyjx_sjtb', #{jgbm}, #{tpzm}
+		)
+	</insert>
+</mapper>

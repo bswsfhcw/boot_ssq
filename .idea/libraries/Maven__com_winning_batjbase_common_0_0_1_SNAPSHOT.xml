@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.winning.batjbase:common:0.0.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/batjbase/common/0.0.1-SNAPSHOT/common-0.0.1-20210114.021007-79.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/batjbase/common/0.0.1-SNAPSHOT/common-0.0.1-20210114.021007-79-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/batjbase/common/0.0.1-SNAPSHOT/common-0.0.1-20210114.021007-79-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

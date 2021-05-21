@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.WjmbMapper">
+    <select id="queryMbsl" resultType="java.lang.Integer">
+        SELECT  count(1) mbsl from qyjx_khwj_mb mb where  DATE(mb.cjsj)  =curdate()
+    </select>
+    <select id="queryMbslByMbbh" resultType="java.lang.Integer">
+        SELECT  count(1) mbsl from qyjx_khwj_mb mb where mbbh=#{bean.mbbh}
+        <if test='bean.czlx!=null and bean.czlx =="2" '><!--修改的时候不能改编号为已经存在的-->
+            AND id != #{bean.id}
+        </if>
+    </select>
+    <select id="queryByid" resultType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO">
+        select id,mbbh,mbmc,mbfbt,mbxsfs,mblx,mbfj,cjr,cjsj,gxr,gxsj,zt
+        from qyjx_khwj_mb WHERE id=#{id}
+    </select>
+    <select id="queryList" resultType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO">
+        select id,mbbh,mbmc,mbfbt,mbxsfs,mblx,mbfj,cjr,cjsj,gxr,gxsj,zt
+        from qyjx_khwj_mb WHERE mbslid is null
+        <if test='bean.mbmc!=null and bean.mbmc !=""'>
+            AND ( mbmc like CONCAT('%',#{bean.mbmc},'%') OR mbbh like CONCAT('%',#{bean.mbmc},'%') )
+        </if>
+        <if test='bean.zt!=null and bean.zt !=""'>
+            AND zt = #{bean.zt}
+        </if>
+    </select>
+    <insert id="saveOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_mb(id,mbbh,mbmc,mbfbt,mbxsfs,mblx,mbfj,cjr,cjsj,gxr,gxsj,zt)  values
+        ( null,#{bean.mbbh},#{bean.mbmc},#{bean.mbfbt},#{bean.mbxsfs},#{bean.mblx},#{bean.mbfj},#{bean.cjr},#{bean.cjsj},#{bean.gxr},#{bean.gxsj},1)
+    </insert>
+    <insert id="copyOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_mb(id,mbbh,mbmc,mbfbt,mbxsfs,mblx,mbfj,cjr,cjsj,gxr,gxsj,zt)
+        select null,#{bean.mbbh},#{bean.mbmc},#{bean.mbfbt},#{bean.mbxsfs},#{bean.mblx},#{bean.mbfj},#{bean.cjr},#{bean.cjsj},#{bean.gxr},#{bean.gxsj},1
+        from qyjx_khwj_mb where id=#{bean.id}
+    </insert>
+    <update id="updateOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO">
+        update qyjx_khwj_mb wm set mbbh= #{bean.mbbh},mbmc= #{bean.mbmc},mbfbt= #{bean.mbfbt},mbxsfs= #{bean.mbxsfs},mblx= #{bean.mblx},mbfj= #{bean.mbfj},gxr= #{bean.gxr},gxsj= #{bean.gxsj},zt= #{bean.zt}
+        where id = #{bean.id}
+    </update>
+    <update id="statuOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO">
+        update qyjx_khwj_mb wm set zt= #{bean.zt} where id = #{bean.id}
+    </update>
+    <update id="deleteOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO">
+        DELETE wm from qyjx_khwj_mb wm where wm.id=#{bean.id}
+    </update>
+</mapper>

@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.winning.batjbase:security:0.0.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/batjbase/security/0.0.1-SNAPSHOT/security-0.0.1-20210512.062846-73.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/batjbase/security/0.0.1-SNAPSHOT/security-0.0.1-20210512.062846-73-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../maven/cath/repository/com/winning/batjbase/security/0.0.1-SNAPSHOT/security-0.0.1-20210512.062846-73-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

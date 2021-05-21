@@ -1,0 +1,50 @@
+2021-05-18 17:01:34,933 INFO (SpringApplication.java:652)- The following profiles are active: common,dev
+2021-05-18 17:01:55,863 DEBUG (RequestAttributeHystrixConcurrencyStrategy.java:74)- Current Hystrix plugins configuration is [concurrencyStrategy [com.netflix.hystrix.strategy.concurrency.HystrixConcurrencyStrategyDefault@756015ad],eventNotifier [com.netflix.hystrix.strategy.eventnotifier.HystrixEventNotifierDefault@7c3e806e],metricPublisher [io.micrometer.core.instrument.binder.hystrix.MicrometerMetricsPublisher@14af080b],propertiesStrategy [com.netflix.hystrix.strategy.properties.HystrixPropertiesStrategyDefault@1c010f98],]
+2021-05-18 17:01:55,864 DEBUG (RequestAttributeHystrixConcurrencyStrategy.java:78)- Registering Sleuth Hystrix Concurrency Strategy.
+2021-05-18 17:02:07,132 INFO (StartupInfoLogger.java:59)- Started CoreApplication in 43.468 seconds (JVM running for 52.032)
+2021-05-18 17:02:11,407 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT DISTINCT hh.hh,count(1) cc,'H' hl from ( SELECT hh1 hh,kjrq from ssq UNION all SELECT hh2 hh,kjrq from ssq UNION all SELECT hh3 hh,kjrq from ssq UNION all SELECT hh4 hh,kjrq from ssq UNION all SELECT hh5 hh,kjrq from ssq UNION all SELECT hh6 hh,kjrq from ssq ) hh where 1=1 GROUP by hh.hh union ALL SELECT DISTINCT lh hh,count(1) cc ,'L' hl from ssq where 1=1 GROUP by lh 
+2021-05-18 17:02:11,464 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:02:11,677 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT count(0) FROM ssq WHERE 1 = 1 
+2021-05-18 17:02:11,678 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:02:11,696 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 1
+2021-05-18 17:02:11,700 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: select id,kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh from ssq WHERE 1=1 ORDER BY kjrq desc LIMIT ? 
+2021-05-18 17:02:11,701 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 20(Integer)
+2021-05-18 17:02:11,710 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 49
+2021-05-18 17:02:11,719 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 20
+2021-05-18 17:03:23,845 INFO (SpringApplication.java:652)- The following profiles are active: common,dev
+2021-05-18 17:03:33,722 DEBUG (RequestAttributeHystrixConcurrencyStrategy.java:74)- Current Hystrix plugins configuration is [concurrencyStrategy [com.netflix.hystrix.strategy.concurrency.HystrixConcurrencyStrategyDefault@6b4b187],eventNotifier [com.netflix.hystrix.strategy.eventnotifier.HystrixEventNotifierDefault@3d4eba3b],metricPublisher [io.micrometer.core.instrument.binder.hystrix.MicrometerMetricsPublisher@72eed782],propertiesStrategy [com.netflix.hystrix.strategy.properties.HystrixPropertiesStrategyDefault@770d047a],]
+2021-05-18 17:03:33,723 DEBUG (RequestAttributeHystrixConcurrencyStrategy.java:78)- Registering Sleuth Hystrix Concurrency Strategy.
+2021-05-18 17:03:42,738 INFO (StartupInfoLogger.java:59)- Started CoreApplication in 29.446 seconds (JVM running for 39.86)
+2021-05-18 17:04:20,411 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT DISTINCT hh.hh,count(1) cc,'H' hl from ( SELECT hh1 hh,kjrq from ssq UNION all SELECT hh2 hh,kjrq from ssq UNION all SELECT hh3 hh,kjrq from ssq UNION all SELECT hh4 hh,kjrq from ssq UNION all SELECT hh5 hh,kjrq from ssq UNION all SELECT hh6 hh,kjrq from ssq ) hh where 1=1 GROUP by hh.hh union ALL SELECT DISTINCT lh hh,count(1) cc ,'L' hl from ssq where 1=1 GROUP by lh 
+2021-05-18 17:04:20,447 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:04:20,490 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT count(0) FROM ssq WHERE 1 = 1 
+2021-05-18 17:04:20,491 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:04:21,050 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 1
+2021-05-18 17:04:21,060 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: select id,kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh from ssq WHERE 1=1 ORDER BY kjrq desc LIMIT ? 
+2021-05-18 17:04:21,061 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 20(Integer)
+2021-05-18 17:04:21,162 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 20
+2021-05-18 17:04:21,239 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 49
+2021-05-18 17:04:24,302 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT count(0) FROM ssq WHERE 1 = 1 
+2021-05-18 17:04:24,303 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:04:24,304 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT DISTINCT hh.hh,count(1) cc,'H' hl from ( SELECT hh1 hh,kjrq from ssq UNION all SELECT hh2 hh,kjrq from ssq UNION all SELECT hh3 hh,kjrq from ssq UNION all SELECT hh4 hh,kjrq from ssq UNION all SELECT hh5 hh,kjrq from ssq UNION all SELECT hh6 hh,kjrq from ssq ) hh where 1=1 GROUP by hh.hh union ALL SELECT DISTINCT lh hh,count(1) cc ,'L' hl from ssq where 1=1 GROUP by lh 
+2021-05-18 17:04:24,304 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:04:24,305 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 1
+2021-05-18 17:04:24,306 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: select id,kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh from ssq WHERE 1=1 ORDER BY kjrq desc LIMIT ? 
+2021-05-18 17:04:24,306 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 20(Integer)
+2021-05-18 17:04:24,312 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 20
+2021-05-18 17:04:24,344 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 49
+2021-05-18 17:04:28,596 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: delete ssq from ssq where qh = ? 
+2021-05-18 17:04:28,597 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 2021053(String)
+2021-05-18 17:04:28,754 DEBUG (BaseJdbcLogger.java:159)- <==    Updates: 0
+2021-05-18 17:04:28,755 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: insert into ssq(kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh) values (?,?,?,?,?,?,?,?,?) 
+2021-05-18 17:04:28,756 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 2021-05-16(String), 2021053(String), 07(String), 10(String), 14(String), 16(String), 24(String), 33(String), 16(String)
+2021-05-18 17:04:28,833 DEBUG (BaseJdbcLogger.java:159)- <==    Updates: 1
+2021-05-18 17:04:28,940 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT DISTINCT hh.hh,count(1) cc,'H' hl from ( SELECT hh1 hh,kjrq from ssq UNION all SELECT hh2 hh,kjrq from ssq UNION all SELECT hh3 hh,kjrq from ssq UNION all SELECT hh4 hh,kjrq from ssq UNION all SELECT hh5 hh,kjrq from ssq UNION all SELECT hh6 hh,kjrq from ssq ) hh where 1=1 GROUP by hh.hh union ALL SELECT DISTINCT lh hh,count(1) cc ,'L' hl from ssq where 1=1 GROUP by lh 
+2021-05-18 17:04:28,941 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:04:28,941 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: SELECT count(0) FROM ssq WHERE 1 = 1 
+2021-05-18 17:04:28,942 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 
+2021-05-18 17:04:28,952 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 1
+2021-05-18 17:04:28,953 DEBUG (BaseJdbcLogger.java:159)- ==>  Preparing: select id,kjrq,qh,hh1,hh2,hh3,hh4,hh5,hh6,lh from ssq WHERE 1=1 ORDER BY kjrq desc LIMIT ? 
+2021-05-18 17:04:28,954 DEBUG (BaseJdbcLogger.java:159)- ==> Parameters: 20(Integer)
+2021-05-18 17:04:28,959 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 20
+2021-05-18 17:04:28,971 DEBUG (BaseJdbcLogger.java:159)- <==      Total: 49

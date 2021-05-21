@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="utf-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.winning.batjx.core.app.mapper.ReportAnalysisMapper">
+
+    <select id="queryKhfaList"   parameterType="java.util.Map" resultType="java.util.HashMap">
+           <choose>
+               <when test=' khlx=="1" '>
+                   SELECT DISTINCT a.faid,a.famc
+                   FROM   qyjx_khhz a
+                   inner JOIN QYJX_KHFA_JBXX fa on a.faid = fa.id
+                   inner join QYJX_KHFA_FLXX fl on fl.faid = a.faid and fl.fllx in ('1','3')
+                   WHERE a.khnf =#{khnf} AND a.khpl =#{khpl} AND
+                   (
+                   <!--登录人是创建方案的人)-->
+                   fa.czr = #{zclsh}
+                   OR
+                   <!--登录机构是创建方案的机构且登录人是机构负责人)-->
+                   (fa.jgbm=#{jgbm} and #{fzrbz} ='2' )
+                   OR
+                   <!--登录机构是被考核机构且登录人是机构负责人(目前院内被考核科室不给看)-->
+                   (a.khdxbm=#{jgbm} and #{fzrbz} ='2' )
+                   <!--医共体机构负责人登录可以看到考核对象里有他下级机构的方案-->
+                   OR (
+                           a.khdxbm in (
+                                SELECT j.jgbm from sys_zcjg j
+                                where j.sjid = (SELECT sj.id from sys_zcjg sj where sj.jglx='7' and sj.jgbm=#{jgbm} )
+                           )
+                           and #{fzrbz} ='2'
+                   )
+                   <!-- 县卫健委登录可以看到他的下级医共体机构建立的方案-->
+                   OR a.jgbm in (
+                                 SELECT j.jgbm FROM sys_zcjg j
+                                 WHERE j.jglx = '7' and j.sjid = ( SELECT sj.id FROM sys_zcjg sj WHERE sj.jgbm=#{jgbm} )
+                           )
+                   )
+                   ORDER BY a.faid
+               </when>
+               <when test=' khlx=="2" '>
+                   SELECT DISTINCT a.faid,a.famc
+                   FROM qyjx_khhz a
+                   inner JOIN QYJX_KHFA_JBXX fa on a.faid = fa.id
+                   inner join QYJX_KHFA_FLXX fl on fl.faid = a.faid and fl.fllx=2
+                   WHERE a.khnf =#{khnf} AND a.khpl =#{khpl} AND
+                   (
+                   <!--登录人是创建方案的人)-->
+                   fa.czr = #{zclsh}
+                   OR
+                   <!--登录机构是创建方案的机构且登录人是机构负责人)-->
+                   (a.jgbm=#{jgbm} and #{fzrbz} ='2' )
+                   OR
+                   <!--登录机构是被考核机构且登录人是机构负责人(目前院内被考核科室不给看)-->
+                   (a.khdxbm=#{jgbm} and #{fzrbz} ='2' )
+                   <!--医共体机构负责人登录可以看到考核对象里有他下级机构的方案-->
+                   OR (
+                               a.khdxbm in (
+                                       SELECT j.jgbm
+                                       from sys_zcjg j
+                                       where j.sjid = (   SELECT sj.id
+                                                          from sys_zcjg sj
+                                                          where sj.jglx=7 and sj.jgbm=#{jgbm}
+                                                       )
+                               )
+                               and #{fzrbz} ='2'
+                   )
+                   <!-- 县卫健委登录可以看到他的下级医共体机构建立的方案-->
+                   OR a.jgbm in (
+                              SELECT j.jgbm
+                              FROM sys_zcjg j
+                              WHERE j.jglx = '7' and j.sjid = ( SELECT sj.id FROM sys_zcjg sj WHERE sj.jgbm=#{jgbm} )
+                          )
+                   ) ORDER BY a.faid
+
+               </when>
+               <otherwise>
+                   SELECT DISTINCT a.faid,a.famc
+                   FROM      qyjx_khhz a
+                   inner JOIN QYJX_KHFA_JBXX fa on a.faid = fa.id
+                   inner join QYJX_KHFA_FLXX fl on fl.faid = a.faid and fl.fllx in ('1','3')
+                   WHERE a.khnf =#{khnf} AND a.khpl =#{khpl} AND
+                   (
+                   <!--登录人是创建方案的人)-->
+                   fa.czr = #{zclsh}
+                   OR
+                   <!--登录机构是创建方案的机构且登录人是机构负责人)-->
+                   (fa.jgbm=#{jgbm} and #{fzrbz} ='2')
+                   OR
+                   <!--登录机构是被考核机构且登录人是机构负责人(目前院内被考核科室不给看)-->
+                   (a.khdxbm=#{jgbm} and #{fzrbz} ='2')
+                   <!--医共体机构负责人登录可以看到考核对象里有他下级机构的方案-->
+                   OR (
+                   a.khdxbm in (
+                      SELECT j.jgbm from sys_zcjg j
+                      where j.sjid = ( SELECT sj.id from sys_zcjg sj where sj.jglx='7' and sj.jgbm=#{jgbm} )
+                   )
+                   and #{fzrbz} ='2'
+                   )
+                   <!-- 县卫健委登录可以看到他的下级医共体机构建立的方案-->
+                   OR a.jgbm in (
+                       SELECT j.jgbm FROM sys_zcjg j
+                       WHERE j.jglx = '7' and j.sjid = ( SELECT sj.id FROM sys_zcjg sj WHERE sj.jgbm=#{jgbm} )
+                      )
+                   )
+                   ORDER BY a.faid
+               </otherwise>
+           </choose>
+
+    </select>
+
+    <!--区级考核查询语句-->
+    <select id="queryKhdf" parameterType="java.util.Map" resultType="com.winning.batjx.core.app.domain.QyjxKhhzVo">
+       <choose>
+           <when test=' khlx=="1" '>
+               select sum(T.zzbz) as zzbz,sum(T.zbhgzl) as zbhgzl
+               from (
+                   SELECT DISTINCT a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+                   from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                   where   a.faid=#{faid} and
+                           a.khnf=#{khnf} and
+                           a.khpl=#{khpl} and
+                           a.khzq=#{khzq} and
+                           a.khdxlx in ('0','1','2','3','8')  and
+                           a.jgbm=#{jgbm}
+                   union
+                   SELECT DISTINCT a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+                   from  qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                   where   a.faid = #{faid} and
+                           a.khnf = #{khnf} and
+                           a.khpl = #{khpl} and
+                           a.khzq = #{khzq} and
+                           a.khdxlx in ('0','1','2','3','8')   and
+                           ( a.khdxbm=#{jgbm} or
+                               (   a.khdxbm in ( SELECT j.jgbm
+                                                 from sys_zcjg j
+                                                 where j.sjid = ( SELECT sj.id
+                                                                  from sys_zcjg sj
+                                                                  where sj.jglx=7 and
+                                                                        sj.jgbm=#{jgbm}
+                                                                 )
+                                                 )
+                                    and #{fzrbz} =2
+                               )
+                           )
+                   ) T
+
+           </when>
+           <when test=' khlx=="2" '>
+               select sum(T.zbdf) as zbdf
+               from (
+               SELECT DISTINCT a.khdxbm,a.khdxmc,a.mbdf,a.zbdf
+               from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx='2'
+               where   a.faid=#{faid} and
+                       a.khnf=#{khnf} and
+                       a.khpl=#{khpl} and
+                       a.khzq=#{khzq} and
+                       a.khdxlx in ('0','1','2','3','8')  and
+                       a.jgbm=#{jgbm}
+               union
+               SELECT DISTINCT a.khdxbm,a.khdxmc,a.mbdf,a.zbdf
+               from  qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx='2'
+               where   a.faid = #{faid} and
+                       a.khnf = #{khnf} and
+                       a.khpl = #{khpl} and
+                       a.khzq = #{khzq} and
+                       a.khdxlx in ('0','1','2','3','8')   and
+                       ( a.khdxbm=#{jgbm} or
+                                 (   a.khdxbm in ( SELECT j.jgbm
+                                                   from sys_zcjg j
+                                                   where j.sjid = ( SELECT sj.id
+                                                                    from     sys_zcjg sj
+                                                                    where    sj.jglx=7 and
+                                                                             sj.jgbm=#{jgbm}
+                                                                   )
+                                                   )
+                                      and #{fzrbz} =2
+                                 )
+                       )
+               ) T
+           </when>
+           <otherwise>
+               select sum(T.jj) as jj
+               from (
+               SELECT DISTINCT a.khdxbm,a.khdxmc,a.jj
+               from qyjx_khhz a
+               where   a.faid=#{faid} and
+                       a.khnf=#{khnf} and
+                       a.khpl=#{khpl} and
+                       a.khzq=#{khzq} and
+                       a.khdxlx in ('0','1','2','3','8')  and
+                       a.jgbm=#{jgbm} and
+                       a.jj>0
+               union
+               SELECT DISTINCT a.khdxbm,a.khdxmc,a.jj
+               from  qyjx_khhz a
+               where   a.faid = #{faid} and
+                       a.khnf = #{khnf} and
+                       a.khpl = #{khpl} and
+                       a.khzq = #{khzq} and
+                       a.khdxlx in ('0','1','2','3','8')   and
+                      ( a.khdxbm=#{jgbm} or
+                                       (   a.khdxbm in (   SELECT j.jgbm
+                                                           from sys_zcjg j
+                                                           where j.sjid = (  SELECT sj.id
+                                                                             from sys_zcjg sj
+                                                                             where sj.jglx=7 and
+                                                                                 sj.jgbm=#{jgbm}
+                                                                           )
+                                                         )
+                                                        and #{fzrbz} =2
+                                       )
+                      )
+                      and    a.jj>0
+               ) T
+           </otherwise>
+       </choose>
+    </select>
+
+    <select id="queryKhdxDfmx" resultType="com.winning.batjx.core.app.domain.QyjxKhhzVo" parameterType="java.util.Map">
+
+       <choose>
+           <when test=' khlx=="1" '>
+               select a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+               from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+               where a.faid = #{faid} and
+                     a.khnf = #{khnf} and
+                     a.khpl = #{khpl} and
+                     a.khzq = #{khzq} and
+                     a.jgbm = #{jgbm} and
+                     a.khdxlx in ('0','1','2','3','8')
+               union
+               select a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+               from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+               where a.faid = #{faid} and
+                     a.khnf = #{khnf} and
+                     a.khpl = #{khpl} and
+                     a.khzq = #{khzq} and
+                     a.khdxlx in ('0','1','2','3','8') and
+                    ( a.khdxbm=#{jgbm} or (   a.khdxbm in ( SELECT j.jgbm
+                                                            from sys_zcjg j
+                                                            where j.sjid = ( SELECT sj.id
+                                                                           from sys_zcjg sj
+                                                                           where sj.jglx=7 and
+                                                                           sj.jgbm=#{jgbm}
+                                                                           )
+                                                            )
+                                                and #{fzrbz} =2
+                                            )
+                    )
+           </when>
+           <when test=' khlx=="2" '>
+               select a.khdxbm,a.khdxmc,a.zbdf
+               from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+               where a.faid = #{faid} and
+                     a.khnf = #{khnf} and
+                     a.khpl = #{khpl} and
+                     a.khzq = #{khzq} and
+                     a.jgbm = #{jgbm} and
+                     a.khdxlx in ('0','1','2','3','8')
+               union
+               select a.khdxbm,a.khdxmc,a.zbdf
+               from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+               where a.faid = #{faid} and
+                     a.khnf = #{khnf} and
+                     a.khpl = #{khpl} and
+                     a.khzq = #{khzq} and
+                     a.khdxlx in ('0','1','2','3','8')  and
+                     ( a.khdxbm=#{jgbm} or (   a.khdxbm in ( SELECT j.jgbm
+                                                             from sys_zcjg j
+                                                              where j.sjid = ( SELECT sj.id
+                                                                               from    sys_zcjg sj
+                                                                                where  sj.jglx=7   and
+                                                                                       sj.jgbm=#{jgbm}
+                                                                               )
+                                                             )
+                                                 and #{fzrbz} =2
+                                              )
+                     )
+           </when>
+           <otherwise>
+               select a.khdxbm,a.khdxmc,a.jj,a.khdxlx
+               from qyjx_khhz a
+               where a.faid = #{faid} and
+                     a.khnf = #{khnf} and
+                     a.khpl = #{khpl} and
+                     a.khzq = #{khzq} and
+                     a.jgbm = #{jgbm} and
+                     a.khdxlx in ('0','1','2','3','8') and
+                     a.jj>0
+               union
+               select a.khdxbm,a.khdxmc,a.jj,a.khdxlx
+               from qyjx_khhz a
+               where a.faid = #{faid} and
+                     a.khnf = #{khnf} and
+                     a.khpl = #{khpl} and
+                     a.khzq = #{khzq} and
+                     a.khdxlx in ('0','1','2','3','8') and
+                    ( a.khdxbm=#{jgbm} or (   a.khdxbm in ( SELECT j.jgbm
+                                                           from sys_zcjg j
+                                                           where j.sjid = ( SELECT sj.id
+                                                                            from sys_zcjg sj
+                                                                            where sj.jglx=7 and
+                                                                                  sj.jgbm=#{jgbm}
+                                                                            )
+                                                          )
+                                              and #{fzrbz} =2
+                                            )
+                     )  and
+                     a.jj>0
+           </otherwise>
+       </choose>
+
+    </select>
+
+    <select id="queryKhhzList" resultType="com.winning.batjx.core.app.domain.QyjxKhhzVo" parameterType="java.util.Map">
+           <choose>
+               <when test=' khlx=="1" '>
+                   SELECT
+                           a.khdxmc,
+                           b.khzbmc,
+                           b.zbz,
+                           b.bhgzl
+                   FROM    qyjx_khhz a
+                   inner join  qyjx_khhz_xx b ON a.id = b.fid AND b.khlx = #{khlx}
+                   WHERE
+                           a.faid   = #{faid}   and
+                           a.khnf   = #{khnf}   and
+                           a.khpl   = #{khpl}   and
+                           a.khzq   = #{khzq}   and
+                           a.khdxbm = #{khdxbm} and
+                           a.khdxlx in ('0','1','2','3','8')
+               </when>
+               <when test=' khlx=="2" '>
+                   SELECT
+                           a.khdxmc,
+                           b.khzbmc,
+                           b.zbdf
+                   FROM    qyjx_khhz a
+                   inner join  qyjx_khhz_xx b ON a.id = b.fid AND b.khlx = #{khlx}
+                   WHERE
+                           a.faid   = #{faid}   and
+                           a.khnf   = #{khnf}   and
+                           a.khpl   = #{khpl}   and
+                           a.khzq   = #{khzq}   and
+                           a.khdxbm = #{khdxbm} and
+                           a.khdxlx in ('0','1','2','3','8')
+               </when>
+               <otherwise>
+
+               </otherwise>
+           </choose>
+
+    </select>
+
+    <!--院内考核汇总数据查询SQL-->
+    <select id="queryKhdfYjkh" resultType="com.winning.batjx.core.app.domain.QyjxKhhzVo">
+        <choose>
+            <when test=' khlx=="1" '>
+                select sum(T.zzbz) as zzbz,sum(T.zbhgzl) as zbhgzl
+                from (
+                SELECT DISTINCT a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+                from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                where   a.faid=#{faid} and
+                a.khnf=#{khnf} and
+                a.khpl=#{khpl} and
+                a.khzq=#{khzq} and
+                a.khdxlx in ('3','4','5')  and
+                #{fzrbz}='2'     and
+                a.jgbm=#{jgbm}
+                union
+                SELECT DISTINCT a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+                from  qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                where   a.faid = #{faid} and
+                a.khnf = #{khnf} and
+                a.khpl = #{khpl} and
+                a.khzq = #{khzq} and
+                a.khdxlx in ('3','4','5')   and
+                #{fzrbz}='1'     and
+                a.khdxbm in(#{ksbm})
+                ) T
+
+            </when>
+            <when test=' khlx=="2" '>
+                select sum(T.zbdf) as zbdf
+                from (
+                SELECT DISTINCT a.khdxbm,a.khdxmc,a.mbdf,a.zbdf
+                from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx='2'
+                where   a.faid=#{faid} and
+                a.khnf=#{khnf} and
+                a.khpl=#{khpl} and
+                a.khzq=#{khzq} and
+                a.khdxlx in ('3','4','5') and
+                #{fzrbz}='2'     and
+                a.jgbm=#{jgbm}
+                union
+                SELECT DISTINCT a.khdxbm,a.khdxmc,a.mbdf,a.zbdf
+                from  qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx='2'
+                where   a.faid = #{faid} and
+                a.khnf = #{khnf} and
+                a.khpl = #{khpl} and
+                a.khzq = #{khzq} and
+                a.khdxlx in ('3','4','5')   and
+                #{fzrbz}='1'     and
+                a.khdxbm in(#{ksbm})
+                ) T
+            </when>
+            <otherwise>
+                select sum(T.jj) as jj
+                from (
+                SELECT DISTINCT a.khdxbm,a.khdxmc,a.jj
+                from qyjx_khhz a
+                where   a.faid=#{faid}    and
+                        a.khnf=#{khnf}    and
+                        a.khpl=#{khpl}    and
+                        a.khzq=#{khzq}    and
+                        a.khdxlx in ('3','4','5')  and
+                        #{fzrbz}='2'         and
+                        a.jgbm=#{jgbm}       and
+                        a.jj>0
+                union
+                SELECT DISTINCT a.khdxbm,a.khdxmc,a.jj
+                from  qyjx_khhz a
+                where   a.faid = #{faid} and
+                        a.khnf = #{khnf} and
+                        a.khpl = #{khpl} and
+                        a.khzq = #{khzq} and
+                        a.khdxlx in ('3','4','5')   and
+                        #{fzrbz}='1'     and
+                        a.khdxbm in(#{ksbm})  and
+                        a.jj>0
+                ) T
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryKhdxDfmxYjkh" resultType="com.winning.batjx.core.app.domain.QyjxKhhzVo" parameterType="java.util.Map">
+        <choose>
+            <when test=' khlx=="1" '>
+                select a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+                from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                where a.faid = #{faid} and
+                      a.khnf = #{khnf} and
+                      a.khpl = #{khpl} and
+                      a.khzq = #{khzq} and
+                      #{fzrbz}='2'     and
+                      a.jgbm = #{jgbm} and
+                      a.khdxlx in ('4','5','6')
+                union
+                select a.khdxbm,a.khdxmc,a.zzbz,a.zbhgzl
+                from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                where a.faid = #{faid} and
+                      a.khnf = #{khnf} and
+                      a.khpl = #{khpl} and
+                      a.khzq = #{khzq} and
+                      #{fzrbz}='1'     and
+                      a.khdxbm in ( #{ksbm}) and
+                      a.khdxlx in ('4','5','6')
+            </when>
+            <when test=' khlx=="2" '>
+                select a.khdxbm,a.khdxmc,a.zbdf
+                from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                where a.faid = #{faid} and
+                      a.khnf = #{khnf} and
+                      a.khpl = #{khpl} and
+                      a.khzq = #{khzq} and
+                      #{fzrbz}='2'     and
+                      a.jgbm = #{jgbm} and
+                      a.khdxlx in ('4','5','6')
+                union
+                select a.khdxbm,a.khdxmc,a.zbdf
+                from qyjx_khhz a inner join qyjx_khhz_xx b on a.id=b.fid and b.khlx=#{khlx}
+                where a.faid = #{faid} and
+                      a.khnf = #{khnf} and
+                      a.khpl = #{khpl} and
+                      a.khzq = #{khzq} and
+                      #{fzrbz}='1'     and
+                      a.khdxbm in ( #{ksbm}) and
+                      a.khdxlx in ('4','5','6')
+            </when>
+            <otherwise>
+                select a.khdxbm,a.khdxmc,ifnull(a.jj,0) as jj,a.khdxlx
+                from   qyjx_khhz a
+                where a.faid = #{faid} and
+                      a.khnf = #{khnf} and
+                      a.khpl = #{khpl} and
+                      a.khzq = #{khzq} and
+                      #{fzrbz}='2'     and
+                      a.jgbm = #{jgbm} and
+                      a.khdxlx in ('4','5','6') and
+                      a.jj>0
+                union
+                select  a.khdxbm,a.khdxmc,ifnull(a.jj,0) as jj,a.khdxlx
+                from  qyjx_khhz a
+                where a.faid = #{faid}   and
+                      a.khnf = #{khnf}   and
+                      a.khpl = #{khpl}   and
+                      a.khzq = #{khzq}   and
+                      #{fzrbz}='1'       and
+                      a.khdxbm in ( #{ksbm}) and
+                      a.khdxlx in ('4','5','6') and
+                      a.jj>0
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryKhhzListYjkh" resultType="com.winning.batjx.core.app.domain.QyjxKhhzVo">
+
+        <choose>
+            <when test=' khlx=="1" '>
+                SELECT
+                        a.khdxmc,
+                        b.khzbmc,
+                        b.zbz,
+                        b.bhgzl
+                FROM    qyjx_khhz a
+                inner join  qyjx_khhz_xx b ON a.id = b.fid AND b.khlx ='1'
+                WHERE
+                       a.faid   = #{faid}   and
+                       a.khnf   = #{khnf}   and
+                       a.khpl   = #{khpl}   and
+                       a.khzq   = #{khzq}   and
+                       a.khdxbm = #{khdxbm} and
+                       a.khdxlx in ('4','5','6')
+            </when>
+            <when test=' khlx=="2" '>
+                SELECT
+                        a.khdxmc,
+                        b.khzbmc,
+                        b.zbdf
+                FROM    qyjx_khhz a
+                inner join  qyjx_khhz_xx b ON a.id = b.fid AND b.khlx ='2'
+                WHERE
+                    a.faid   = #{faid}   and
+                    a.khnf   = #{khnf}   and
+                    a.khpl   = #{khpl}   and
+                    a.khzq   = #{khzq}   and
+                    a.khdxbm = #{khdxbm} and
+                    a.khdxlx in ('4','5','6')
+            </when>
+            <otherwise>
+                select a.khdxbm,a.khdxmc,ifnull(a.jj,0) as jj
+                from qyjx_khhz a
+                where a.faid = #{faid} and
+                      a.khnf = #{khnf} and
+                      a.khpl = #{khpl} and
+                      a.khzq = #{khzq} and
+                      a.ssksbm = #{khdxbm} and
+                      a.khdxlx='7'
+            </otherwise>
+        </choose>
+
+
+
+    </select>
+
+    <select id="getKhdxlx" resultType="java.lang.Integer"  parameterType="java.util.Map">
+        select count(khdxlx)
+        from   qyjx_khhz
+        where  faid=#{faid} and
+               khnf=#{khnf} and
+               khpl=#{khpl} and
+               khzq=#{khzq} and
+               khdxlx in('0','1','2','3','8')
+    </select>
+
+
+</mapper>

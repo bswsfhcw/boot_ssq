@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.WjkhMapper">
+
+    <select id="queryPageList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            a.zbbm,
+            a.zbmc,
+            b.wjmbbh,
+            c.id mbid,
+            a.khdxmc,
+            (case when d.bz = '已填报' then '已填报' else '未填报' end) zbzt,
+            DATE_FORMAT(d.gxsj, '%Y-%m-%d %H:%i') czsj,c.mbfbt
+        FROM
+            qyjx_khfa_khzb_cf a
+            left JOIN qyjx_khwj_mbzbdz b ON a.zbbm = b.zbbm
+            left join qyjx_khwj_mb c on c.mbbh = b.wjmbbh and c.zt = '1'
+            left join qyjx_khwj_jg d on d.khfaid = a.faid and d.khqj=a.khqj and a.khdxbm = d.khdxbm and a.zbbm = d.khzbbm
+        WHERE
+            a.khqj = #{date}
+            AND a.faid = ${plan} and a.khdxbm = #{object} and a.zbsx = '2'
+            <if test="name != null and name != '' ">
+                AND a.zbmc LIKE concat('%',#{name},'%')
+            </if>
+    </select>
+
+    <select id="queryKhfa" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.domain.KhfaDo">
+        SELECT distinct
+            a.id faid,
+            a.famc
+        FROM
+            qyjx_khfa_jbxx a
+            INNER JOIN qyjx_khfa_khzq b ON a.id = b.faid
+        where a.khpl = #{khpldm} and b.khnf = #{khnf} and a.qyzt = '1'
+    </select>
+
+    <select id="queryKhfaKhqj" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT   b.khzq khqjdm ,
+                 (CASE WHEN a.khpl='1' THEN CONCAT(b.khzq,'月') when a.khpl='2' then  CONCAT(b.khzq,'季度')
+                    when a.khpl='3' AND b.khzq='1' then  CONCAT('上半年')
+                    when a.khpl='3' AND b.khzq='2' then  CONCAT('下半年')
+                    when a.khpl='4' then CONCAT(b.khnf,'年') else '' END
+                 ) khqjmc
+        FROM qyjx_khfa_jbxx a
+        inner join qyjx_khfa_khzq b
+                  on a.id = b.faid AND b.qyzt = '1'
+                  WHERE a.id = #{faid}
+    </select>
+
+    <select id="queryKhfaKhdx" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT
+            a.khdxbm,
+            a.khdxmc
+        FROM
+            qyjx_khfa_khzb_cf a
+        WHERE
+            a.faid = #{faid}
+            AND a.khqj = #{khqjdm}
+    </select>
+
+
+    <select id="queryWjjg" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjjgDo" resultType="com.winning.batjx.core.khgl.khwj.domain.WjjgDo">
+        select
+            a.id,
+            a.nf,
+            a.khpl,
+            a.khqj,
+            a.khfaid faid,
+            a.khdxbm,
+            a.khdxmc,
+            a.khzbbm,
+            a.khzbmc,
+            a.khdf,
+            a.cjr,
+            a.cjsj,
+            a.gxr,
+            a.gxsj,
+            a.bz
+        from qyjx_khwj_jg a
+        where a.khpl = #{khpl}
+            and a.khfaid = ${faid}
+            and a.khqj = #{khqj}
+            and a.nf = #{khnf}
+            and a.khdxbm = #{khdxbm}
+            and a.khzbbm = #{zbbm}
+    </select>
+
+    <insert id="insertWjjg" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjjgDo" useGeneratedKeys="true" keyProperty="id" keyColumn="id" >
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() as id
+        </selectKey>
+        insert into qyjx_khwj_jg (nf,khpl,khqj,khfaid,khdxbm,khdxmc,khzbbm,khzbmc,khdf,cjr,cjsj,gxsj,bz)
+        values(#{khnf},#{khpl},#{khqj},#{faid},#{khdxbm},#{khdxmc},#{zbbm},#{zbmc},null,#{cjr},now(),now(),#{bz})
+    </insert>
+
+    <update id="updateWjjg" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjjgDo">
+        update qyjx_khwj_jg set gxr = #{gxr},gxsj = now(),bz=#{bz}
+                            <choose>
+                                <when test="khdf == null">
+                                    , khdf = 0
+                                </when>
+                                <otherwise>
+                                    , khdf = ${khdf}
+                                </otherwise>
+                            </choose>
+        where nf = #{khnf} and khqj = #{khqj} and khfaid = #{faid} and khdxbm = #{khdxbm} and khzbbm = #{zbbm}
+    </update>
+
+
+    <insert id="insertMbjg" parameterType="com.winning.batjx.core.khgl.khwj.domain.MbjgDo" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() as id
+        </selectKey>
+        insert into qyjx_khwj_mbjg(wjjgid,wjmbid,wjbt,wjfbt,wjxsfs)
+        values (${wjjgid},${wjmbid},#{wjbt},#{wjfbt},#{wjxsfs})
+    </insert>
+
+    <insert id="insertDtjg" parameterType="com.winning.batjx.core.khgl.khwj.domain.DtjgDo" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() as id
+        </selectKey>
+        insert into qyjx_khwj_dtjg(mbjgid,flid,flmc,flsx,tmlx,tmbm,tmmc,tmfbt,tmsx,tmbz,tmda,tmdf)
+        values (${mbjgid},${flid},#{flmc},${flsx},#{tmlx},#{tmbm},#{tmmc},#{tmfbt},${tmsx},#{tmbz},#{tmda},${tmdf})
+    </insert>
+
+    <select id="getWjxxPageInfo" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.domain.WjxxPageDo">
+        SELECT
+            a.mbmc,
+            a.mbbh mbbm,
+            b.id flid,
+            b.mbflmc flmc,
+            b.mbflsx flsx,
+            d.tmlx,
+            d.tmbm,
+            d.tmmc,
+            d.tmfbt,
+            c.tmsx,
+            e.tmda,
+            e.tmbz,
+            f.xxnr,
+            f.xxsx
+        FROM
+            qyjx_khwj_mb a
+            INNER JOIN qyjx_khwj_mbfl b ON a.id = b.mbid
+            INNER JOIN qyjx_khwj_fltmgl c ON c.mbflid = b.id
+            INNER JOIN qyjx_khwj_tm d ON d.id = c.tmid
+                AND d.zt = '1'
+            LEFT JOIN qyjx_khwj_dtjg e ON b.id = e.flid
+                AND d.tmbm = e.tmbm
+            LEFT JOIN qyjx_khwj_tmxx f ON d.id = f.tmid
+        WHERE
+            a.mbbh = #{mbbm}
+        ORDER BY
+            b.id,
+            b.mbflsx,
+            c.tmsx,
+            f.xxsx
+    </select>
+
+    <select id="getSelectXx" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.domain.WjxxPageDo" >
+        SELECT DISTINCT
+                h.dtjgid,e.tmlx,
+                h.xxnr,
+                h.sfgx,
+                g.xxfz
+        FROM
+            qyjx_khwj_jg a
+            inner JOIN qyjx_khwj_mbjg b ON a.id = b.wjjgid
+            INNER JOIN qyjx_khwj_dtjg c ON c.mbjgid = b.id
+            INNER JOIN qyjx_khwj_fltmgl d ON d.mbflid = c.flid
+            INNER JOIN qyjx_khwj_tm e ON e.tmbm = c.tmbm
+                AND e.zt = '1'
+                AND d.tmid = e.id
+            INNER JOIN qyjx_khwj_tmxx f ON f.tmid = e.id
+            INNER JOIN qyjx_khwj_xxfsz g ON g.fltmglid = d.id
+                AND g.tmxxid = f.id
+            INNER JOIN qyjx_khwj_dajgxx h ON h.dtjgid = c.id
+                AND h.xxnr = f.xxnr
+        WHERE
+            a.nf = #{khnf}
+            AND a.khfaid = ${faid}
+            AND a.khdxbm = #{khdxbm}
+            AND a.khqj = #{khqj}
+            AND a.khzbbm = #{zbbm}
+            and h.sfgx = '1'
+    </select>
+
+    <insert id="insertDtjgxx" parameterType="com.winning.batjx.core.khgl.khwj.domain.DtjgxxDo">
+        insert into qyjx_khwj_dajgxx(dtjgid,xxnr,sfgx)
+        values(${dtjgid},#{xxnr},#{sfgx})
+    </insert>
+
+    <select id="getWjmb" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.WjmbVo">
+        SELECT
+            b.id mbid,
+            b.mbbh,
+            b.mbmc,
+            b.mbfbt,
+            b.mblx,
+            b.mbxsfs,
+            (case when b.mbxsfs = '1' then 24 else 12 end) cols,
+            b.mbfj
+        FROM
+            qyjx_khwj_mbzbdz a
+            INNER JOIN qyjx_khwj_mb b ON a.wjmbbh = b.mbbh
+            AND b.zt = '1'
+        WHERE
+            a.zbbm = #{zbbm}
+    </select>
+
+    <update id="updateTmdf" parameterType="java.util.Map" >
+        update qyjx_khwj_dtjg set tmdf = ${df},tmda = ${tmda} where id = ${dtjgid}
+    </update>
+
+    <update id="updateSjtbKhdf" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjjgDo">
+        update qyjx_sjtb set zbz = ${khdf},czsj=now()
+        where faid = ${faid} and dxbm = #{khdxbm} and zbbm = #{zbbm} and khzq = #{khqj}
+    </update>
+
+
+    <select id="getMbfl"  parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.MbflVo">
+        SELECT
+            a.id flid,
+            a.mbid,
+            a.mbflmc flmc,
+            a.mbflsx flsx,
+            a.sfyfj
+        FROM
+        qyjx_khwj_mbfl AS a where a.mbid = ${mbid} order by a.mbflsx
+    </select>
+
+    <select id="getMbtm" parameterType="com.winning.batjx.core.khgl.khwj.vo.MbflVo" resultType="com.winning.batjx.core.khgl.khwj.vo.MbtmVo">
+        SELECT distinct
+            b.id tmid,
+            b.tmbm,
+            b.tmmc tmbt,
+            b.tmlx,
+            b.tmfbt,
+            b.sfdtbz,
+            a.tmsx
+        FROM
+            qyjx_khwj_fltmgl AS a
+            INNER JOIN qyjx_khwj_tm AS b ON a.tmid = b.id
+            AND b.zt = '1'
+        WHERE
+            a.mbflid = ${flid}
+            order by a.tmsx
+    </select>
+
+    <select id="getTmxx" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.TmxxVo">
+        SELECT distinct
+            a.id xxid,
+            a.tmid,
+            a.xxnr,
+            a.xxsx,
+			b.sfgx,
+			b.tmbz,d.xxfz
+        FROM  qyjx_khwj_tmxx AS a
+				left join (
+						select bb.*,cc.id tmid,aa.tmbz from qyjx_khwj_dtjg aa
+						inner join qyjx_khwj_dajgxx bb on aa.id = bb.dtjgid
+					    inner join qyjx_khwj_tm cc on cc.zt = '1' and cc.tmbm = aa.tmbm and cc.tmlx in ('1','2')
+					    inner join qyjx_khwj_mbjg dd on dd.wjmbid = ${mbid}  and aa.mbjgid = dd.id
+					              and dd.wjjgid in (select id from qyjx_khwj_jg where
+                                                    khpl = #{khpl}
+                                                    and  khfaid = ${faid}
+                                                    and  khqj = #{khqj}
+                                                    and  nf = #{khnf}
+                                                    and  khdxbm = #{khdxbm}
+                                                    and  khzbbm = #{zbbm}
+                                    )
+						where  aa.flid = ${flid} and aa.tmbm = #{tmbm}
+				) b on a.xxnr = b.xxnr and a.tmid = b.tmid
+				inner join qyjx_khwj_fltmgl c on c.tmid = a.tmid
+	            inner join qyjx_khwj_xxfsz d on d.fltmglid = c.id and d.tmxxid = a.id
+		where a.tmid = ${tmid}
+		and c.mbflid in (select fl.id from qyjx_khwj_mb mb inner join qyjx_khwj_mbfl fl on fl.mbid = mb.id and mb.id = ${mbid})
+		order by a.xxsx
+    </select>
+
+    <select id="getTktgsxx" parameterType="com.winning.batjx.core.khgl.khwj.vo.TkxxVo" resultType="com.winning.batjx.core.khgl.khwj.vo.TktgsxxVo" >
+        SELECT
+            a.id,
+            a.fltmglid,
+            a.sfgsmc,
+            a.sfgsbm,
+            a.xh,
+            a.fdksz,
+            a.fdksjsf,
+            a.fdjsz,
+            a.fdjsjsf,
+            a.dfz
+        from qyjx_khwj_pfgs a where a.fltmglid = ${xxid}
+    </select>
+
+    <select id="getTkxx" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.TkxxVo">
+        SELECT DISTINCT
+             a.id xxid,
+             a.tmid,
+             a.tmsx,
+             a.tmdaly,
+             a.tmdagsmc,
+             a.tmdagsbm,
+             a.tkzsfwdf,
+             a.tmsffs,
+             a.tmsffffl,
+             a.tmsfbdsms,
+             (case when b.dtjgid is null then d.cjjg else b.tmda end) tmda,
+             b.tmbz
+        FROM
+            qyjx_khwj_fltmgl AS a
+            LEFT JOIN (
+                        SELECT
+                            aa.tmda,aa.id dtjgid,
+                            cc.id tmid,aa.tmbz
+                        FROM
+                            qyjx_khwj_dtjg aa
+                            INNER JOIN qyjx_khwj_tm cc ON cc.zt = '1'
+                                AND cc.tmbm = aa.tmbm and cc.tmlx = '3'
+                            INNER JOIN qyjx_khwj_mbjg dd ON dd.wjmbid = ${mbid}
+                                AND aa.mbjgid = dd.id
+                                AND dd.wjjgid = (select id from qyjx_khwj_jg where
+                                                khpl = #{khpl}
+                                                and  khfaid = ${faid}
+                                                and  khqj = #{khqj}
+                                                and  nf = #{khnf}
+                                                and  khdxbm = #{khdxbm}
+                                                and  khzbbm = #{zbbm}
+                                )
+                        WHERE
+                            aa.flid = ${flid}
+                            AND aa.tmbm = #{tmbm}
+            ) b ON  a.tmid = b.tmid
+            left join qyjx_khwj_tm c on c.id = a.tmid and c.zt = '1'
+            left join qyjx_zb_sjcj d on d.cjdxlb != '2' and d.cjdx = #{khdxbm} and d.xmbm = c.tmbm and d.nf = #{khnf} and d.cjqj = #{khqj}
+        WHERE a.tmid = ${tmid} and a.mbflid = ${flid}
+    </select>
+
+    <delete id="deleteDtjgxx" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjjgDo">
+        delete from qyjx_khwj_dajgxx where dtjgid in (select id from qyjx_khwj_dtjg where mbjgid in(select id from qyjx_khwj_mbjg where wjjgid = ${id}) );
+        delete from qyjx_khwj_dtjg where mbjgid in (select id from qyjx_khwj_mbjg where wjjgid = ${id});
+        delete from qyjx_khwj_mbjg where wjjgid = ${id}
+    </delete>
+
+    <delete id="removeFile" parameterType="java.util.Map">
+        delete from qyjx_wjgl where mkid = ${mkid} and mkbm = #{mkbm} and bz = #{bz}
+    </delete>
+
+    <insert id="insertFile" parameterType="java.util.Map">
+        insert into qyjx_wjgl (mkid,mkbm,yswjmc,ccwjmc,wjlx,cclj,scsj,scr,jlzt,bz,jgbm)
+        values(${mkid},#{mkbm},#{yswjmc},#{ccwjmc},#{wjlx},#{cclj},now(),#{scr},'1',#{bz},#{jgbm})
+    </insert>
+
+    <select id="getFlFile" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.FileVo">
+        select yswjmc name,cclj url,mkid,mkbm,ccwjmc ljname from qyjx_wjgl where mkid = ${mkid} and mkbm = #{mkbm} and bz = #{bz}
+    </select>
+</mapper>

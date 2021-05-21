@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.MbdzMapper">
+
+    <select id="queryPageList" parameterType="java.util.Map" resultType="com.winning.batjx.core.khgl.khwj.vo.MbzbdzVo">
+        SELECT
+                a.zbbm,
+                a.zbmc,
+                b.wjmbbh
+            FROM
+                qyjx_zb a
+                LEFT JOIN qyjx_khwj_mbzbdz b ON a.zbbm = b.zbbm
+            WHERE
+                a.zbsxbm='2' and
+                a.cjfsbm='3' and
+                EXISTS ( SELECT 1 FROM qyjx_zbqx c WHERE a.id = c.zbid AND c.ryid = #{zclsh} AND c.jgbm = #{jgbm} )
+                <if test="zbmc!=null and zbmc!='' ">
+                   AND a.zbmc LIKE concat('%',#{zbmc},'%')
+                </if>
+            order by a.sx
+    </select>
+
+    <select id="getMbdzByKey" resultType="com.winning.batjx.core.khgl.khwj.domain.MbzbdzDO">
+        SELECT id,wjmbbh,zbbm FROM qyjx_khwj_mbzbdz where zbbm=#{zbbm}
+    </select>
+
+    <select id="queryMbxx"  parameterType="java.lang.String" resultType="com.winning.batjx.core.khgl.khwj.domain.WjmbDO">
+        select id,mbbh,mbmc,mbfbt,mbxsfs,mblx,zt from qyjx_khwj_mb where mbbh=#{mbbh}
+    </select>
+
+    <insert id="insertMbdz" parameterType="com.winning.batjx.core.khgl.khwj.domain.MbzbdzDO" useGeneratedKeys="true" keyProperty="id" >
+        insert into qyjx_khwj_mbzbdz(id,wjmbbh,zbbm ) value (null,#{wjmbbh,jdbcType=VARCHAR},#{zbbm,jdbcType=VARCHAR})
+    </insert>
+
+    <update id="updateMbdz" parameterType="com.winning.batjx.core.khgl.khwj.domain.MbzbdzDO">
+        update qyjx_khwj_mbzbdz set wjmbbh=#{wjmbbh,jdbcType=VARCHAR}
+        where id=#{id}
+    </update>
+
+
+</mapper>

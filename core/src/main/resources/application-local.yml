@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:sqlserver://127.0.0.1:1433;instanceName=express;DatabaseName=moto
+    username: sa
+    password: abc

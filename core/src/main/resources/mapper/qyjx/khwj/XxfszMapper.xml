@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.XxfszMapper">
+    <select id="queryByFltmgl" resultType="com.winning.batjx.core.khgl.khwj.domain.XxfszDO">
+      select xfz.id,#{fltmglid} fltmglid, IFNULL(xfz.tmxxid,tx.id) tmxxid,IFNULL(xfz.xxfz,0) xxfz,tx.xxnr
+        from qyjx_khwj_fltmgl ftg INNER JOIN qyjx_khwj_tmxx tx on tx.tmid =ftg.tmid
+        LEFT JOIN qyjx_khwj_xxfsz  xfz on  xfz.fltmglid = ftg.id and xfz.tmxxid=tx.id
+        where ftg.id=#{fltmglid}
+        ORDER BY tx.xxsx asc
+    </select>
+    <insert id="saveOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.XxfszDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_xxfsz(id,fltmglid,tmxxid,xxfz) values
+        (null,#{bean.fltmglid},#{bean.tmxxid},#{bean.xxfz})
+    </insert>
+    <insert id="copyOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.XxfszDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_xxfsz(id,fltmglid,tmxxid,xxfz)
+        select null,#{bean.fltmglid},#{bean.tmxxid},#{bean.xxfz}
+        from qyjx_khwj_xxfsz where id = #{bean.id}
+    </insert>
+    <insert id="saveList">
+        insert into qyjx_khwj_xxfsz(fltmglid,tmxxid,xxfz) values
+        <foreach collection="list" item="bean" separator=",">
+            (#{bean.fltmglid},#{bean.tmxxid},#{bean.xxfz})
+        </foreach>
+    </insert>
+    <update id="updateOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.XxfszDO">
+        update qyjx_khwj_xxfsz fsz set fltmglid= #{bean.fltmglid},tmxxid= #{bean.tmxxid},xxfz= #{bean.xxfz}
+        where id = bean.id
+    </update>
+    <update id="updateList">
+        <foreach collection="list" item="bean" separator=";">
+            update qyjx_khwj_xxfsz set fltmglid= #{bean.fltmglid},tmxxid= #{bean.tmxxid},xxfz= #{bean.xxfz}
+            where id = bean.id
+        </foreach>
+    </update>
+    <update id="deleteOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.XxfszDO">
+        DELETE fsz from qyjx_khwj_xxfsz fsz where fsz.id=#{bean.id}
+    </update>
+    <update id="deleteByFltmgl">
+        DELETE fsz from qyjx_khwj_xxfsz fsz where fsz.fltmglid=#{fltmglid}
+    </update>
+</mapper>

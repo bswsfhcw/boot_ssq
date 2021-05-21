@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    qyjx:
+      driverClass: com.mysql.jdbc.Driver
+#      url: jdbc:mysql://172.16.0.101:3306/qyjx_test?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+      url: jdbc:mysql://localhost:3306/pworld?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+      username: root
+      password: root
+#    wph:
+#     driverClass: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#     url: jdbc:sqlserver://172.16.0.121:1433;database=NETWPH1
+#     username: sa
+#     password: wph@2020
+#    his:
+#      driverClass: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#      url: jdbc:sqlserver://172.16.0.121:1433;database=NETHIS1
+#      username: sa
+#      password: wph@2020
+#    emr:
+#      driverClass: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#      url: jdbc:sqlserver://172.16.0.121:1433;database=NETEMR1
+#      username: sa
+#      password: wph@2020
+logging:
+  level:
+    com.winning: debug
+  config: classpath:logback-boot.xml

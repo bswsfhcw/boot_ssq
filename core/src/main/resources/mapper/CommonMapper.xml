@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.CommonMapper">
+
+
+    <!-- 根据参数编号 和机构编码  获取参数值-->
+    <select id="getCssz" resultType="java.lang.String" parameterType="java.util.Map">
+         SELECT IFNULL(b.csz,a.mrz) csz
+         FROM qyjx_cslb a
+         LEFT JOIN qyjx_cssz b ON a.csbh = b.csbh AND b.jgbm=#{jgbm}
+         WHERE a.csbh=#{csbh}
+    </select>
+
+
+    <select id="queryParentJgList" parameterType="java.lang.Integer" resultType="java.util.Map">
+        SELECT
+            t2.jgbm,
+            T2.jgmc
+        FROM
+            (
+                SELECT
+                    @r AS _id,
+                    (
+                        SELECT
+                            @r := sjid
+                        FROM
+                            sys_zcjg
+                        WHERE
+                            id = _id
+                    ) AS parent_id,
+                    @l := @l + 1 AS lvl
+                FROM
+                    (
+                        SELECT
+                            @r := (
+                                SELECT
+                                    a.id
+                                FROM
+                                    sys_zcjg a,
+                                    qyjx_khfa_jbxx b
+                                WHERE
+                                    b.id =${faid} and b.jgbm=a.jgbm
+                            ),
+                            @l := 0
+                    ) vars,
+                    sys_zcjg h
+                WHERE
+                    @r != 0
+            ) T1
+                INNER JOIN sys_zcjg T2 ON T1._id = T2.id and T2.jgbm=#{jgbm}
+    </select>
+
+</mapper>

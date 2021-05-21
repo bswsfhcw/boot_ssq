@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.winning.batjx.core.khgl.khwj.mapper.WjmbflMapper">
+    <select id="queryByMbid" resultType="com.winning.batjx.core.khgl.khwj.domain.WjmbflDO">
+        select id,mbid,mbflmc,mbflsx,sfyfj
+        from qyjx_khwj_mbfl WHERE mbid =#{mbid} order by mbflsx asc
+    </select>
+    <select id="queryMaxSxByMbid" resultType="java.lang.Integer">
+       SELECT IFNULL( max(mbflsx),0) mbflsx from qyjx_khwj_mbfl where mbid =#{mbid}
+    </select>
+    <insert id="saveOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbflDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_mbfl(id,mbid,mbflmc,mbflsx,sfyfj) values
+        (null,#{bean.mbid},#{bean.mbflmc},#{bean.mbflsx},#{bean.sfyfj})
+    </insert>
+    <insert id="copyOne" parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbflDO" useGeneratedKeys="true" keyProperty="id">
+        insert into qyjx_khwj_mbfl(id,mbid,mbflmc,mbflsx,sfyfj)
+        select null,#{bean.mbid},#{bean.mbflmc},#{bean.mbflsx},#{bean.sfyfj}
+        from qyjx_khwj_mbfl where id = #{bean.id}
+    </insert>
+    <update id="updateOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbflDO">
+        update qyjx_khwj_mbfl set mbflmc= #{bean.mbflmc},mbflsx= #{bean.mbflsx},sfyfj= #{bean.sfyfj}
+        where id = #{bean.id}
+    </update>
+    <update id="deleteOne"  parameterType="com.winning.batjx.core.khgl.khwj.domain.WjmbflDO">
+        DELETE fl from qyjx_khwj_mbfl fl where fl.id=#{bean.id}
+    </update>
+</mapper>

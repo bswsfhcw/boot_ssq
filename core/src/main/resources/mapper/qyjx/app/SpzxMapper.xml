@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.winning.batjx.core.app.mapper.SpzxMapper">
+
+    <!--判断流程实例是否存在 act_hi_taskinst / act_ru_task-->
+    <select id="queryLcslid"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT th.PROC_INST_ID_  lcslid, u.FIRST_ zxr,a.MESSAGE_ zxdz
+         from ${tableName} th
+         LEFT JOIN act_hi_comment a on th.id_ = a.TASK_ID_
+         LEFT JOIN act_id_user u on th.ASSIGNEE_ = u.id_
+        where  th.id_=#{taskid}
+    </select>
+    <!--判断审核类型-->
+    <select id="queryShlx"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT   'TBSH' shlx, lc.id shywid, lc.lcslid  from qyjx_sjtb_lc lc  where lc.lcslid =#{lcslid} limit 1
+        UNION
+        SELECT   'PJSH' shlx, lc.id shywid, lc.lcslid  from qyjx_pjjs lc  where lc.lcslid =#{lcslid} limit 1
+        UNION
+        SELECT   'JJSH' shlx, lc.id shywid, lc.lcslid  from qyjx_jjjs lc  where lc.lcslid =#{lcslid} limit 1
+    </select>
+    <!---->
+    <select id="querySjtbLx"   parameterType="java.util.Map" resultType="java.lang.String">
+       SELECT lc.tblx from qyjx_sjtb_lc lc where lc.id = #{shywid}
+    </select>
+    <select id="querySpxxKhdxSjtb"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT lm.khdxlx,lm.khdxbm,lm.khdxmc
+         FROM qyjx_sjtb_lcmx lm,qyjx_sjtb_lc lc
+         where lm.lcslid = lc.lcslid and lc.id = #{shywid}
+         and EXISTS (
+          SELECT 1 from qyjx_khfa_khzb_cf cf where lc.faid=cf.faid and lc.khnf=cf.khnf and lc.khpl=cf.khpl and lc.khqj=cf.khqj and lm.khdxlx=cf.dxlx and lm.khdxbm=cf.khdxbm
+          )
+         ORDER BY lm.khdxbm
+    </select>
+    <select id="querySpxxKhdxPjjs"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT DISTINCT lm.khdxlx,lm.khdxbm,lm.khdxmc
+         FROM  qyjx_pjjs_lcmx lm,qyjx_pjjs lc
+         where lm.lcslid = lc.lcslid and lc.id = #{shywid}
+         and EXISTS (
+          SELECT 1 from qyjx_khfa_khzb_cf cf where lc.faid=cf.faid and lc.khnf=cf.khnf and lc.khpl=cf.khpl and lc.khqj=cf.khqj and lm.khdxlx=cf.dxlx and lm.khdxbm=cf.khdxbm
+          )
+         ORDER BY lm.khdxbm
+    </select>
+    <select id="querySpxxSjtb"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT lm.id,lm.lcslid,lm.khdxlx,lm.khdxbm,lm.khdxmc,lm.zbbm,lm.zbmc,IFNULL(lm.zbz,tb.cjz) zbz,IFNULL(lm.zbz,tb.cjz) sjdfxz,lm.tbid,lm.dhyy
+          FROM qyjx_sjtb_lcmx lm
+          INNER JOIN qyjx_sjtb_lc lc on lm.lcslid = lc.lcslid
+          LEFT JOIN qyjx_sjtb tb on lm.tbid = tb.id
+         where lc.id = #{shywid} and lm.khdxbm = #{khdxbm}
+         and EXISTS (
+          SELECT 1 from qyjx_khfa_khzb_cf cf where lc.faid=cf.faid and lc.khnf=cf.khnf and lc.khpl=cf.khpl and lc.khqj=cf.khqj and lm.khdxlx=cf.dxlx and lm.khdxbm=cf.khdxbm
+          )
+    </select>
+    <select id="querybjzbCountSjtb"   parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT count(1) bjzbCount
+          FROM qyjx_sjtb_lcmx lm
+          INNER JOIN qyjx_sjtb_lc lc on lm.lcslid = lc.lcslid
+         where lc.id = #{shywid} and lm.khdxbm = #{khdxbm}
+         and EXISTS (
+          SELECT 1 from qyjx_khfa_khzb_cf cf where lc.faid=cf.faid and lc.khnf=cf.khnf and lc.khpl=cf.khpl and lc.khqj=cf.khqj and lm.khdxlx=cf.dxlx and lm.khdxbm=cf.khdxbm
+          )
+         and lm.zbzt=1
+    </select>
+    <select id="querySpxxPjjs"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT lm.id,lm.lcslid,lm.khdxlx,lm.khdxbm,lm.khdxmc,lm.khzbbm zbbm,lm.khzbmc zbmc,lm.zbz,lm.zbbhz,lm.sjdfxz,lm.mbdf
+        FROM qyjx_pjjs_lcmx lm, qyjx_pjjs lc
+        where lm.lcslid= lc.lcslid and lc.id = #{shywid}  and lm.khdxbm = #{khdxbm}  and lm.khlx = #{pjlx}
+        and EXISTS (
+        SELECT 1 from qyjx_khfa_khzb_cf cf where lc.faid=cf.faid and lc.khnf=cf.khnf and lc.khpl=cf.khpl and lc.khqj=cf.khqj and lm.khdxlx=cf.dxlx and lm.khdxbm=cf.khdxbm
+        )
+        <!--and lm.khdxlx &lt;&gt; 7-->
+    </select>
+    <select id="querySpxxSjtbGr"   parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT tb.id,tb.dxmc,IFNULL(tb.zbz,tb.cjz) zbz FROM qyjx_sjtb tb,qyjx_sjtb_lc lc
+         where tb.faid=lc.faid and tb.khnf=lc.khnf and tb.khpl=lc.khpl and tb.khzq =lc.khqj
+        and tb.dxlx=7
+        and lc.id=#{shywid}
+        and tb.ssksbm=#{ssksbm}
+        and tb.zbbm=#{zbbm}
+        ORDER BY tb.dxbm desc
+    </select>
+    <select id="querySpxxPjjsGr"   parameterType="java.util.Map" resultType="java.util.Map">
+       SELECT  lm.id,lm.khdxmc dxmc,lm.zbz,lm.sjdfxz
+        FROM qyjx_pjjs_lcmx lm, qyjx_pjjs lc
+        where lm.lcslid= lc.lcslid and lc.id = #{shywid}  and lm.khlx = #{pjlx}
+        and lm.ssksbm=#{ssksbm}
+        and lm.khzbbm=#{zbbm}
+        and lm.khdxlx = 7
+    </select>
+    <update id="bjzbListSjtb" parameterType="java.util.Map">
+        update qyjx_sjtb_lcmx lm set lm.zbzt=1, lm.dhyy = #{dhyy} where lm.id in
+        <foreach item="item" index="index" collection="checkVal" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+    <!--评价计算暂无标记指标-->
+    <update id="bjzbListPjjs" parameterType="java.util.Map">
+    </update>
+    <!--<update id="bjzbListPjjs" parameterType="java.util.Map">
+       update qyjx_pjjs_lcmx lm set lm.dhyy = #{dhyy} where lm.id in
+        <foreach item="item" index="index" collection="checkVal" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>-->
+</mapper>
